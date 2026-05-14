@@ -1,75 +1,127 @@
-# FineTuna
+# 🐟 FineTuna
 
-FineTuna is a guided web app for fine-tuning open-source language models without managing GPU infrastructure directly. It helps a user choose a base model, prepare or select training data, configure LoRA/QLoRA/full fine-tuning settings, launch the job on Kaggle, monitor progress, and download the trained model artifacts when the run is complete.
+**FineTuna** is a guided dashboard for fine-tuning open-source language models without manually managing notebooks, GPU setup, dataset packaging, or artifact downloads.
 
-## What It Does
+It helps a user move from **model selection → dataset setup → training configuration → Kaggle execution → results + downloads** in one clear flow.
 
-FineTuna turns the fine-tuning workflow into a step-by-step dashboard:
+---
 
-1. Sign in to a workspace.
-2. Connect the required providers.
-3. Choose a base model from the Hugging Face catalog.
-4. Select or create a dataset template.
-5. Configure training settings, accelerator choice, precision, LoRA parameters, and checkpoint behavior.
-6. Submit the training job to Kaggle.
-7. Track queued/running/completed status.
-8. Download artifacts only when the user explicitly requests them.
-9. Review before/after performance metrics and saved run history.
+## ✨ Product Preview
 
-The goal is to make small-model fine-tuning usable from a browser while keeping expensive compute on free or user-owned provider resources.
+| 🧭 Main Dashboard | 📊 Results & Downloads |
+| --- | --- |
+| ![FineTuna main dashboard showing the guided setup flow, provider connection status, recent training activity, and before/after performance summary](docs/images/main-dashboard.png) | ![FineTuna results page showing model download buttons, Kaggle artifact status, before and after training metrics, and the generated technique report](docs/images/results-downloads.png) |
 
-## Main Features
+---
 
-- Guided setup flow so users do not jump randomly between model, data, config, training, and results pages.
-- Hugging Face model search with filters for architecture, parameter size, VRAM, and activity.
-- Built-in dataset templates plus a custom "My Data" draft area.
-- Overlay-based template creation and editing.
-- Kaggle execution pipeline that creates a dataset package, pushes a notebook/script, requests the selected accelerator, and tracks the run.
-- GPU/TPU/CPU configuration controls with explicit accelerator selection.
-- Safer Kaggle output handling: completed runs stay on Kaggle until the user clicks the output download button.
-- Model artifact downloads for adapter files, merged model output, and reports.
-- Before/after performance panel using metrics written by the training run.
-- Version history for previous training jobs.
-- Google Drive OAuth connection for user-owned Drive access.
-- Supabase-backed auth/data support with local fallback behavior for development.
+## 🚀 What FineTuna Does
 
-## Training Outputs
+FineTuna turns the model fine-tuning process into a structured browser workflow:
+
+1. 🔐 **Sign in** to a workspace.
+2. 🔌 **Connect providers** like Kaggle, Google Drive, Supabase, and Hugging Face.
+3. 🧠 **Choose a base model** from the Hugging Face catalog.
+4. 🗂️ **Select or create training data** using templates or custom drafts.
+5. ⚙️ **Configure training** with LoRA, QLoRA, full fine-tuning, precision, batch size, and accelerator options.
+6. ☁️ **Launch the run on Kaggle** using the selected GPU/TPU/CPU target.
+7. 📡 **Track status** while the job is queued, running, or completed.
+8. 📦 **Download outputs manually** only when the user clicks the artifact button.
+9. 📈 **Compare before/after performance** with training metrics and reports.
+
+The goal is simple: **make small-model fine-tuning approachable from a clean web interface while using free or user-owned compute resources.**
+
+---
+
+## 🧩 Core Features
+
+- 🧭 **Guided flow:** prevents users from jumping randomly between setup steps.
+- 🔎 **Model discovery:** Hugging Face model search with filters for architecture, size, VRAM, and activity.
+- 🗃️ **Template system:** built-in datasets plus a separate **My Data** area for saved drafts.
+- 📝 **Overlay editor:** create, edit, save, and remove templates without leaving the page.
+- ☁️ **Kaggle pipeline:** packages datasets, generates the training script, pushes the notebook, and tracks execution.
+- 🎛️ **Accelerator choice:** GPU, TPU, and CPU options with explicit Kaggle accelerator selection.
+- 🧪 **Training methods:** LoRA, QLoRA, and full fine-tuning support.
+- 📦 **Manual artifact downloads:** no automatic output pulling after Kaggle finishes.
+- 📊 **Before/after metrics:** baseline and post-training loss/perplexity when available.
+- 🕓 **Run history:** saved job versions, reports, and previous model runs.
+- 🔐 **Provider auth:** Supabase auth, Kaggle credentials/OAuth flow, Google Drive OAuth, and optional Resend email support.
+
+---
+
+## 📦 Training Outputs
 
 When a Kaggle run succeeds, FineTuna can produce:
 
-- Adapter files for LoRA/QLoRA runs.
-- Merged model exports when the merge step succeeds.
-- Full model files for full fine-tuning runs.
-- A training summary JSON file.
-- A human-readable training report.
-- Baseline and post-training loss/perplexity metrics.
+- 🧩 **Adapter files** for LoRA/QLoRA runs.
+- 🧬 **Merged model exports** when merge succeeds.
+- 🧱 **Full model files** for full fine-tuning runs.
+- 📄 **Training summary JSON** with structured metrics.
+- 🧾 **Human-readable report** describing the run.
+- 📈 **Baseline vs tuned metrics** such as loss and perplexity.
 
-FineTuna does not automatically pull all Kaggle outputs after completion. This is intentional to avoid bandwidth spikes and accidental downloads of large or unwanted files.
+FineTuna intentionally does **not** auto-download Kaggle output after completion. This avoids bandwidth spikes and prevents unwanted files like checkpoints or callback state from being pulled unless the user asks for them.
 
-## Provider Roles
+---
 
-- Supabase handles user authentication and persistent app data when configured.
-- Kaggle runs the actual fine-tuning job on the user's available accelerator quota.
-- Hugging Face supplies model catalog search and base model IDs.
-- Google Drive OAuth lets users connect their own Drive account.
-- Resend can be used through Supabase SMTP for transactional auth emails if confirmation emails are enabled.
+## 🔌 Provider Roles
 
-## Privacy And Safety
+| Provider | Role |
+| --- | --- |
+| 🟢 **Supabase** | Authentication and persistent user/job data when configured |
+| 🔵 **Kaggle** | Executes fine-tuning jobs using the user's available accelerator quota |
+| 🤗 **Hugging Face** | Supplies model search and base model IDs |
+| 🟨 **Google Drive** | Lets users connect their own Drive account |
+| ✉️ **Resend** | Optional transactional email provider through Supabase SMTP |
+| ▲ **Vercel** | Hosts the frontend and API catch-all function |
 
-FineTuna is designed so secrets and runtime artifacts are not committed to source control:
+---
 
-- Environment files are ignored.
-- Kaggle credentials are ignored.
-- Runtime job output is ignored.
-- Vercel local metadata is ignored.
-- Downloaded training artifacts are ignored.
+## 🔐 Privacy & Safety
 
-The app also avoids automatically downloading Kaggle outputs in the background. Output download is a user-triggered action.
+FineTuna is designed to avoid pushing private files or large runtime artifacts:
 
-## Current Deployment Shape
+- ✅ Environment files are ignored.
+- ✅ Kaggle credentials are ignored.
+- ✅ Runtime job output is ignored.
+- ✅ Vercel local metadata is ignored.
+- ✅ Downloaded model artifacts are ignored.
+- ✅ Kaggle outputs are downloaded only after an explicit user click.
 
-The app is a Vite React frontend with a single Vercel API catch-all function. Internally, API logic is organized into route handlers for auth, jobs, Kaggle, models, and Google Drive. The catch-all structure keeps the project within Vercel Hobby plan serverless function limits.
+---
 
-## Intended Users
+## 🏗️ Current Architecture
 
-FineTuna is for builders who want to fine-tune smaller open-source models for a specific domain but do not want to manually write notebook boilerplate, package datasets, track provider credentials, and manage output artifacts by hand.
+FineTuna is a **Vite + React** app with a single Vercel API catch-all function.
+
+Internally, the API is organized into route handlers for:
+
+- 🔐 Auth
+- 🧠 Models
+- 🧾 Jobs
+- ☁️ Kaggle execution
+- 🟨 Google Drive
+- 📦 Artifact download
+
+The catch-all API design keeps the project within Vercel Hobby plan serverless function limits while preserving clean backend route organization.
+
+---
+
+## 🎯 Intended Users
+
+FineTuna is built for:
+
+- Indie builders fine-tuning small models.
+- Students experimenting with LoRA/QLoRA.
+- Teams creating domain-specific assistants.
+- Developers who want Kaggle-backed training without hand-writing notebook boilerplate.
+- Users who want browser-first control over model selection, data setup, training, and downloads.
+
+---
+
+## 🐟 Why FineTuna
+
+Fine-tuning should not require wiring together five dashboards, hand-editing notebook scripts, guessing GPU settings, and accidentally downloading huge outputs.
+
+FineTuna keeps the workflow focused:
+
+**choose the model, choose the data, configure the run, train on Kaggle, download only what you need.**
