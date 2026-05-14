@@ -1,37 +1,40 @@
+# Logs
+logs
+*.log
+dev-*.log
+*.err.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Local agent/runtime data
-.agents/
-.codex/
-.codex-artifacts/
-.claude-flow/
-test-results/
-AGENTS.md
-# Environment variables and secrets
+# Dependencies and build output
+node_modules/
+dist/
+dist-ssr/
+
+# Runtime data and secrets
+.runtime/
+.test-runtime/
 .env
 .env.*
 !.env.example
+*.local
 *.pem
 *.key
 credentials.json
 kaggle.json
 
-# Node and app artifacts
-node_modules/
-dist/
-dist-ssr/
-src/app/node_modules/
-src/app/dist/
-src/app/.runtime/
-src/app/.test-runtime/
-src/app/.env
-src/app/.env.*
-!src/app/.env.example
-src/app/dev-*.log
-src/app/*.err.log
-*.log
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Temporary stray files
-({})))
-0
-100
-example.instruction
+.vercel

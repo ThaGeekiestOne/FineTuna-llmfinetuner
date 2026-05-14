@@ -63,12 +63,12 @@ https://your-domain.example/api/drive/callback
 
 ## Vercel Deployment
 
-Deploy this app with the Vercel project root set to `src/app`.
+Deploy this app with the Vercel project root set to the repository root.
 
 Recommended Vercel settings:
 
 - Framework preset: `Vite`
-- Root directory: `src/app`
+- Root directory: repository root
 - Build command: `npm run build`
 - Output directory: `dist`
 
