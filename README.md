@@ -1,112 +1,75 @@
-# FineTuna App
+# FineTuna
 
-React + Vite frontend with colocated Node-style API routes for auth, Kaggle orchestration, and Google Drive OAuth.
+FineTuna is a guided web app for fine-tuning open-source language models without managing GPU infrastructure directly. It helps a user choose a base model, prepare or select training data, configure LoRA/QLoRA/full fine-tuning settings, launch the job on Kaggle, monitor progress, and download the trained model artifacts when the run is complete.
 
-## Local
+## What It Does
 
-```bash
-npm install
-npm run dev
-```
+FineTuna turns the fine-tuning workflow into a step-by-step dashboard:
 
-App URL:
+1. Sign in to a workspace.
+2. Connect the required providers.
+3. Choose a base model from the Hugging Face catalog.
+4. Select or create a dataset template.
+5. Configure training settings, accelerator choice, precision, LoRA parameters, and checkpoint behavior.
+6. Submit the training job to Kaggle.
+7. Track queued/running/completed status.
+8. Download artifacts only when the user explicitly requests them.
+9. Review before/after performance metrics and saved run history.
 
-```text
-http://127.0.0.1:5175/
-```
+The goal is to make small-model fine-tuning usable from a browser while keeping expensive compute on free or user-owned provider resources.
 
-## Environment
+## Main Features
 
-Set these in `.env.local` for local work and in Vercel project env vars for deployment:
+- Guided setup flow so users do not jump randomly between model, data, config, training, and results pages.
+- Hugging Face model search with filters for architecture, parameter size, VRAM, and activity.
+- Built-in dataset templates plus a custom "My Data" draft area.
+- Overlay-based template creation and editing.
+- Kaggle execution pipeline that creates a dataset package, pushes a notebook/script, requests the selected accelerator, and tracks the run.
+- GPU/TPU/CPU configuration controls with explicit accelerator selection.
+- Safer Kaggle output handling: completed runs stay on Kaggle until the user clicks the output download button.
+- Model artifact downloads for adapter files, merged model output, and reports.
+- Before/after performance panel using metrics written by the training run.
+- Version history for previous training jobs.
+- Google Drive OAuth connection for user-owned Drive access.
+- Supabase-backed auth/data support with local fallback behavior for development.
 
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-FINETUNA_ENCRYPTION_KEY=
-HUGGING_FACE_TOKEN=
-GOOGLE_DRIVE_CLIENT_ID=
-GOOGLE_DRIVE_CLIENT_SECRET=
-GOOGLE_DRIVE_REDIRECT_URI=
-```
+## Training Outputs
 
-Notes:
+When a Kaggle run succeeds, FineTuna can produce:
 
-- `SUPABASE_URL` / `SUPABASE_ANON_KEY` are read by the server routes.
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` are used by the client.
-- `GOOGLE_DRIVE_REDIRECT_URI` should be your final deployed callback URL in production, for example:
-  `https://your-domain.example/api/drive/callback`
+- Adapter files for LoRA/QLoRA runs.
+- Merged model exports when the merge step succeeds.
+- Full model files for full fine-tuning runs.
+- A training summary JSON file.
+- A human-readable training report.
+- Baseline and post-training loss/perplexity metrics.
 
-## Google Drive OAuth
+FineTuna does not automatically pull all Kaggle outputs after completion. This is intentional to avoid bandwidth spikes and accidental downloads of large or unwanted files.
 
-The app uses one Google OAuth client for the whole deployment. Users sign into their own Google accounts through that client.
+## Provider Roles
 
-Required Google Cloud setup:
+- Supabase handles user authentication and persistent app data when configured.
+- Kaggle runs the actual fine-tuning job on the user's available accelerator quota.
+- Hugging Face supplies model catalog search and base model IDs.
+- Google Drive OAuth lets users connect their own Drive account.
+- Resend can be used through Supabase SMTP for transactional auth emails if confirmation emails are enabled.
 
-1. Enable `Google Drive API`.
-2. Create an OAuth client of type `Web application`.
-3. Add the callback URL to `Authorized redirect URIs`.
-4. Copy the client ID and secret into env vars.
+## Privacy And Safety
 
-For local development, register:
+FineTuna is designed so secrets and runtime artifacts are not committed to source control:
 
-```text
-http://127.0.0.1:5175/api/drive/callback
-```
+- Environment files are ignored.
+- Kaggle credentials are ignored.
+- Runtime job output is ignored.
+- Vercel local metadata is ignored.
+- Downloaded training artifacts are ignored.
 
-For Vercel production, register your production domain callback:
+The app also avoids automatically downloading Kaggle outputs in the background. Output download is a user-triggered action.
 
-```text
-https://your-domain.example/api/drive/callback
-```
+## Current Deployment Shape
 
-## Vercel Deployment
+The app is a Vite React frontend with a single Vercel API catch-all function. Internally, API logic is organized into route handlers for auth, jobs, Kaggle, models, and Google Drive. The catch-all structure keeps the project within Vercel Hobby plan serverless function limits.
 
-Deploy this app with the Vercel project root set to the repository root.
+## Intended Users
 
-Recommended Vercel settings:
-
-- Framework preset: `Vite`
-- Root directory: repository root
-- Build command: `npm run build`
-- Output directory: `dist`
-
-Set the same env vars in the Vercel project settings before the first production deploy.
-
-If Google Drive popup shows a configuration error, the deployment is missing:
-
-- `GOOGLE_DRIVE_CLIENT_ID`
-- `GOOGLE_DRIVE_CLIENT_SECRET`
-- or a matching redirect URI in Google Cloud
-
-## Supabase Auth Email With Resend SMTP
-
-Use Resend as Supabase's custom SMTP provider for signup confirmation, password reset, magic link, and email-change messages. These credentials are configured in the Supabase dashboard, not in this repository or Vercel env vars.
-
-1. Create or open a Resend account.
-2. Verify a sending domain in Resend if you want a real from-address such as `FineTuna <no-reply@your-domain.com>`.
-3. Create a Resend API key.
-4. Open Supabase Dashboard -> Authentication -> Emails -> SMTP Settings.
-5. Enable custom SMTP and enter:
-
-```text
-Sender email: no-reply@your-domain.com
-Sender name: FineTuna
-Host: smtp.resend.com
-Port: 465
-Username: resend
-Password: your Resend API key
-Secure connection: enabled
-```
-
-6. Open Supabase Dashboard -> Authentication -> URL Configuration.
-7. Set Site URL to your deployed app URL, for example `https://your-domain.example`.
-8. Add redirect URLs for local and production:
-
-```text
-http://127.0.0.1:5175
-https://your-domain.example
-```
-
-When email confirmation is enabled, signup returns a "check your inbox" message and the user signs in after confirming the email.
+FineTuna is for builders who want to fine-tune smaller open-source models for a specific domain but do not want to manually write notebook boilerplate, package datasets, track provider credentials, and manage output artifacts by hand.
