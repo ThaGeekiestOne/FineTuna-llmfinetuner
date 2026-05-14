@@ -1,4 +1,4 @@
-import { fetchProviderCatalog } from '../server/providerCatalog.mjs'
+import { fetchProviderCatalog } from '../providerCatalog.mjs'
 
 export default async function handler(request, response) {
   try {

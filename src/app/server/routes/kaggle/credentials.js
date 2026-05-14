@@ -1,6 +1,6 @@
-import { getKaggleCredentials, hasKaggleCredentials, saveKaggleCredentials } from '../../server/kaggleCredentialsStore.mjs'
-import { getKaggleOAuthStatus } from '../../server/kaggleAuthRuntime.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../server/authSession.mjs'
+import { getKaggleCredentials, hasKaggleCredentials, saveKaggleCredentials } from '../../kaggleCredentialsStore.mjs'
+import { getKaggleOAuthStatus } from '../../kaggleAuthRuntime.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
 
 export default async function handler(request, response) {
   try {

@@ -1,5 +1,5 @@
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../server/authSession.mjs'
-import { listGoogleDriveFiles } from '../../server/googleDriveService.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { listGoogleDriveFiles } from '../../googleDriveService.mjs'
 
 export default async function handler(request, response) {
   try {

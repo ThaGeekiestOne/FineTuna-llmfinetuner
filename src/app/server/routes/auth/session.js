@@ -1,4 +1,4 @@
-import { destroyAuthenticatedSession, readAuthenticatedUser } from '../../server/authSession.mjs'
+import { destroyAuthenticatedSession, readAuthenticatedUser } from '../../authSession.mjs'
 
 export default async function handler(request, response) {
   try {

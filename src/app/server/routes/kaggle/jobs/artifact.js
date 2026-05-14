@@ -1,8 +1,8 @@
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { basename, relative, resolve, sep } from 'node:path'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../server/authSession.mjs'
-import { getJob } from '../../../server/jobsStore.mjs'
-import { resolveRuntimePath } from '../../../server/runtimePaths.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { getJob } from '../../../jobsStore.mjs'
+import { resolveRuntimePath } from '../../../runtimePaths.mjs'
 
 export default async function handler(request, response) {
   try {

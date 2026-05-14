@@ -1,5 +1,5 @@
-import { deleteJob, getJob, updateJob } from '../../server/jobsStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../server/authSession.mjs'
+import { deleteJob, getJob, updateJob } from '../../jobsStore.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
 import { sendJson } from '../jobs.js'
 
 export default async function handler(request, response) {

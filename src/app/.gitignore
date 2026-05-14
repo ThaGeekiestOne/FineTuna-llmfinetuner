@@ -36,3 +36,5 @@ kaggle.json
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

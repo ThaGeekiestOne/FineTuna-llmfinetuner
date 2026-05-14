@@ -1,6 +1,6 @@
-import { getJob, updateJob } from '../../../server/jobsStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../server/authSession.mjs'
-import { startKaggleExecution } from '../../../server/kaggleService.mjs'
+import { getJob, updateJob } from '../../../jobsStore.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { startKaggleExecution } from '../../../kaggleService.mjs'
 
 export default async function handler(request, response) {
   try {

@@ -1,5 +1,5 @@
-import { listDocumentSources, saveDocumentSources } from '../../server/documentSourcesStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../server/authSession.mjs'
+import { listDocumentSources, saveDocumentSources } from '../../documentSourcesStore.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
 
 export default async function handler(request, response) {
   try {

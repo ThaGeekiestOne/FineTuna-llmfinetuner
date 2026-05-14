@@ -1,5 +1,5 @@
-import { signInUser } from '../../server/authProvider.mjs'
-import { startAuthenticatedSession } from '../../server/authSession.mjs'
+import { signInUser } from '../../authProvider.mjs'
+import { startAuthenticatedSession } from '../../authSession.mjs'
 
 export default async function handler(request, response) {
   try {

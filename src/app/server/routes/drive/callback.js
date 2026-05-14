@@ -1,5 +1,5 @@
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../server/authSession.mjs'
-import { completeGoogleDriveAuth } from '../../server/googleDriveService.mjs'
+import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { completeGoogleDriveAuth } from '../../googleDriveService.mjs'
 
 const driveStateCookieName = 'finetuna_drive_state'
 

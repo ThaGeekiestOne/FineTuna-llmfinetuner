@@ -1,6 +1,6 @@
-import { getKaggleOAuthStatus } from '../../server/kaggleAuthRuntime.mjs'
-import { requireAuthenticatedUser } from '../../server/authSession.mjs'
-import { confirmKaggleOAuthCode, getKaggleOAuthSessionStatus, revokeKaggleOAuthLogin, startKaggleOAuthLogin } from '../../server/kaggleAuthService.mjs'
+import { getKaggleOAuthStatus } from '../../kaggleAuthRuntime.mjs'
+import { requireAuthenticatedUser } from '../../authSession.mjs'
+import { confirmKaggleOAuthCode, getKaggleOAuthSessionStatus, revokeKaggleOAuthLogin, startKaggleOAuthLogin } from '../../kaggleAuthService.mjs'
 
 export default async function handler(request, response) {
   try {
