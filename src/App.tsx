@@ -825,8 +825,8 @@ function App() {
         <section className="auth-visual">
           <div className="auth-visual-copy">
             <span className="auth-kicker">FineTuna</span>
-            <h1>Train and ship tuned models without leaving one workflow.</h1>
-            <p>Connect providers, shape datasets, launch jobs, and track versions from a single operator surface.</p>
+            <h1>Fine-tune models from one calm control room.</h1>
+            <p>Pick a model, shape your data, launch on Kaggle, and pull only the artifacts you actually need.</p>
           </div>
 
           <div className="auth-metrics">
