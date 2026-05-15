@@ -1,5 +1,4 @@
 import { Readable, Writable } from 'node:stream'
-import { dispatchApiRoute } from '../../server/routes/router.mjs'
 
 export async function handler(event) {
   try {
@@ -22,6 +21,11 @@ export async function handler(event) {
       body: JSON.stringify({ error: error instanceof Error ? error.message : 'Netlify API function failed' }),
     }
   }
+}
+
+async function dispatchApiRoute(request, response) {
+  const router = await import('../../server/routes/router.mjs')
+  return router.dispatchApiRoute(request, response)
 }
 
 function buildRequest(event) {
