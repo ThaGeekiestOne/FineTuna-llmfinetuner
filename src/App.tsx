@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import './App.css'
 import { fallbackCustomTemplate, models, templates, type DomainTemplate, type ModelCard, type Technique, type TrainingExample } from './lib/catalog'
-import { getAuthSession, signIn, signOut, signUp, type AuthUser } from './lib/auth'
+import { completeOAuthSignIn, getAuthSession, readOAuthRedirectPayload, signIn, signOut, signUp, startOAuthSignIn, type AuthUser, type OAuthProvider } from './lib/auth'
 import { disconnectGoogleDrive, getGoogleDriveStatus, startGoogleDriveAuth, type GoogleDriveStatus } from './lib/drive'
 import { buildKaggleArtifactUrl, confirmKaggleOAuthLogin, createStoredJob, deleteStoredJob, downloadKaggleJobOutput, fetchKaggleJobStatus, getKaggleCredentialsStatus, getKaggleOAuthStatus, listStoredJobs, revokeKaggleOAuthLogin, saveKaggleCredentials, startKaggleJob, startKaggleOAuthLogin, type KaggleOAuthStatus, type StoredJob, updateStoredJob } from './lib/jobs'
 import { fetchProviderCatalog } from './lib/providers'
@@ -214,7 +214,7 @@ function App() {
   }, [section, job?.id])
 
   useEffect(() => {
-    void loadAuthSession()
+    void initializeAuthSession()
   }, [])
 
   useEffect(() => {
@@ -722,6 +722,33 @@ function App() {
   const latestCompletedJob = historyJobs.find((item) => item.status === 'completed') ?? null
   const performanceJob = job?.status === 'completed' ? job : latestCompletedJob
 
+  async function initializeAuthSession() {
+    const oauthPayload = readOAuthRedirectPayload()
+    if (!oauthPayload) {
+      await loadAuthSession()
+      return
+    }
+
+    window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`)
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+      setAuthNotice('')
+      if ('error' in oauthPayload) {
+        setAuthError(oauthPayload.error)
+        setAuthUser(null)
+        return
+      }
+      const user = await completeOAuthSignIn(oauthPayload)
+      setAuthUser(user)
+    } catch (error) {
+      setAuthUser(null)
+      setAuthError(error instanceof Error ? error.message : 'OAuth sign-in failed')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   async function loadAuthSession() {
     try {
       const user = await getAuthSession()
@@ -760,6 +787,18 @@ function App() {
       setAuthError(error instanceof Error ? error.message : 'Authentication failed')
     } finally {
       setAuthLoading(false)
+    }
+  }
+
+  function startProviderAuth(provider: OAuthProvider) {
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+      setAuthNotice('')
+      startOAuthSignIn(provider)
+    } catch (error) {
+      setAuthLoading(false)
+      setAuthError(error instanceof Error ? error.message : 'OAuth sign-in is not configured')
     }
   }
 
@@ -851,8 +890,8 @@ function App() {
             <div className="auth-divider"><span>or</span></div>
 
               <div className="auth-actions">
-                <button disabled>Continue with Google</button>
-                <button disabled>Continue with GitHub</button>
+                <button onClick={() => startProviderAuth('google')} disabled={authLoading}>Continue with Google</button>
+                <button onClick={() => startProviderAuth('github')} disabled={authLoading}>Continue with GitHub</button>
               </div>
 
             <div className="auth-footer">

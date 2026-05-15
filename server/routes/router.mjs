@@ -1,4 +1,5 @@
 import authLoginHandler from './auth/login.js'
+import authOAuthHandler from './auth/oauth.js'
 import authSessionHandler from './auth/session.js'
 import authSignupHandler from './auth/signup.js'
 import driveAuthHandler from './drive/auth.js'
@@ -20,6 +21,7 @@ export async function dispatchApiRoute(request, response) {
 
   if (path === '/api/models') return run(modelsHandler, request, response)
   if (path === '/api/auth/login') return run(authLoginHandler, request, response)
+  if (path === '/api/auth/oauth') return run(authOAuthHandler, request, response)
   if (path === '/api/auth/signup') return run(authSignupHandler, request, response)
   if (path === '/api/auth/session') return run(authSessionHandler, request, response)
   if (path === '/api/kaggle/credentials') return run(kaggleCredentialsHandler, request, response)

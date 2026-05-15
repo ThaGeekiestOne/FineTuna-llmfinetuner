@@ -72,6 +72,26 @@ export async function getSupabaseUser(accessToken) {
   return mapSupabaseUser(payload)
 }
 
+export async function createSupabaseOAuthSession({ accessToken, refreshToken }) {
+  if (!isSupabaseAuthConfigured()) {
+    const error = new Error('Supabase auth is not configured')
+    error.statusCode = 400
+    throw error
+  }
+  const user = await getSupabaseUser(accessToken)
+  if (!user) {
+    const error = new Error('Supabase OAuth login did not return a valid user')
+    error.statusCode = 401
+    throw error
+  }
+  return {
+    provider: 'supabase',
+    user,
+    accessToken,
+    refreshToken: refreshToken ?? '',
+  }
+}
+
 export async function refreshSupabaseSession(refreshToken) {
   if (!isSupabaseAuthConfigured() || !refreshToken) return null
   const payload = await supabaseFetch('/auth/v1/token?grant_type=refresh_token', {
