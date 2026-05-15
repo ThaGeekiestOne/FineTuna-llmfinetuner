@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { handler } from '../netlify/functions/api.js'
+import { handler } from '../netlify/functions/api.mjs'
 
 test('Netlify API function routes auth session requests', async () => {
   const response = await handler({
