@@ -14,16 +14,19 @@ export default async function handler(request, response) {
 
     if (request.method === 'POST') {
       const state = createGoogleDriveAuthState(user.id)
-      response.setHeader('Set-Cookie', buildDriveStateCookie(state))
+      appendSetCookie(response, buildDriveStateCookie(state))
       return send(response, 200, {
-        ...await getGoogleDriveStatus(user.id, accessToken),
+        configured: false,
+        email: null,
+        displayName: null,
+        provider: 'google_drive',
         url: buildGoogleDriveAuthUrl(state, getGoogleRedirectUri(request)),
       })
     }
 
     if (request.method === 'DELETE') {
       await disconnectGoogleDrive(user.id, accessToken)
-      response.setHeader('Set-Cookie', clearDriveStateCookie())
+      appendSetCookie(response, clearDriveStateCookie())
       return send(response, 200, { configured: false, email: null, displayName: null, provider: 'google_drive' })
     }
 
@@ -49,6 +52,12 @@ function buildDriveStateCookie(state) {
 
 function clearDriveStateCookie() {
   return `${driveStateCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+}
+
+function appendSetCookie(response, cookie) {
+  const current = response.getHeader?.('Set-Cookie') ?? response.getHeader?.('set-cookie')
+  const next = Array.isArray(current) ? [...current, cookie] : current ? [String(current), cookie] : cookie
+  response.setHeader('Set-Cookie', next)
 }
 
 function send(response, statusCode, payload) {

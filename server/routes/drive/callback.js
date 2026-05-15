@@ -20,7 +20,7 @@ export default async function handler(request, response) {
 
     if (!code || !state || !storedState || state !== storedState) {
       response.statusCode = 400
-      response.setHeader('Set-Cookie', clearDriveStateCookie())
+      appendSetCookie(response, clearDriveStateCookie())
       response.setHeader('Content-Type', 'text/html; charset=utf-8')
       response.end(renderCallbackPage('Google Drive connection failed. The OAuth state did not validate.'))
       return
@@ -34,12 +34,12 @@ export default async function handler(request, response) {
     })
 
     response.statusCode = 200
-    response.setHeader('Set-Cookie', clearDriveStateCookie())
+    appendSetCookie(response, clearDriveStateCookie())
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
     response.end(renderCallbackPage('Google Drive connected. You can close this tab now.', true))
   } catch (error) {
     response.statusCode = error.statusCode ?? 500
-    response.setHeader('Set-Cookie', clearDriveStateCookie())
+    appendSetCookie(response, clearDriveStateCookie())
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
     response.end(renderCallbackPage(error instanceof Error ? error.message : 'Google Drive connection failed'))
   }
@@ -53,6 +53,12 @@ function getBaseUrl(request) {
 
 function clearDriveStateCookie() {
   return `${driveStateCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+}
+
+function appendSetCookie(response, cookie) {
+  const current = response.getHeader?.('Set-Cookie') ?? response.getHeader?.('set-cookie')
+  const next = Array.isArray(current) ? [...current, cookie] : current ? [String(current), cookie] : cookie
+  response.setHeader('Set-Cookie', next)
 }
 
 function renderCallbackPage(message, success = false) {
