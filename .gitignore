@@ -26,6 +26,10 @@ dist-ssr/
 credentials.json
 kaggle.json
 
+# Local deploy metadata
+.netlify/
+.vercel/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -37,4 +41,3 @@ kaggle.json
 *.sln
 *.sw?
 
-.vercel

@@ -15,3 +15,17 @@ test('Netlify API function routes auth session requests', async () => {
   assert.equal(response.statusCode, 200)
   assert.equal(JSON.parse(response.body).authenticated, false)
 })
+
+test('Netlify API function normalizes redirected function paths', async () => {
+  const response = await handler({
+    httpMethod: 'GET',
+    path: '/.netlify/functions/api/auth/session',
+    rawUrl: 'https://finetuna.netlify.app/.netlify/functions/api/auth/session',
+    headers: { host: 'finetuna.netlify.app' },
+    body: '',
+    isBase64Encoded: false,
+  })
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(JSON.parse(response.body).authenticated, false)
+})

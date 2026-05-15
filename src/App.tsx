@@ -218,6 +218,15 @@ function App() {
   }, [])
 
   useEffect(() => {
+    function handlePageShow() {
+      setAuthLoading(false)
+    }
+
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
+  useEffect(() => {
     if (!authUser) return
     void loadHuggingFaceModels('')
     void loadStoredJobs()
@@ -792,9 +801,8 @@ function App() {
 
   function startProviderAuth(provider: OAuthProvider) {
     try {
-      setAuthLoading(true)
       setAuthError('')
-      setAuthNotice('')
+      setAuthNotice(`Redirecting to ${provider === 'google' ? 'Google' : 'GitHub'}...`)
       startOAuthSignIn(provider)
     } catch (error) {
       setAuthLoading(false)

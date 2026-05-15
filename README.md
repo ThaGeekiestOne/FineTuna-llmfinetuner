@@ -72,7 +72,7 @@ FineTuna intentionally does **not** auto-download Kaggle output after completion
 | 🤗 **Hugging Face** | Supplies model search and base model IDs |
 | 🟨 **Google Drive** | Lets users connect their own Drive account |
 | ✉️ **Resend** | Optional transactional email provider through Supabase SMTP |
-| ▲ **Vercel** | Hosts the frontend and API catch-all function |
+| 🟩 **Netlify** | Hosts the frontend and serverless API function |
 
 ---
 
@@ -83,7 +83,7 @@ FineTuna is designed to avoid pushing private files or large runtime artifacts:
 - ✅ Environment files are ignored.
 - ✅ Kaggle credentials are ignored.
 - ✅ Runtime job output is ignored.
-- ✅ Vercel local metadata is ignored.
+- ✅ Local deploy metadata is ignored.
 - ✅ Downloaded model artifacts are ignored.
 - ✅ Kaggle outputs are downloaded only after an explicit user click.
 
@@ -91,7 +91,7 @@ FineTuna is designed to avoid pushing private files or large runtime artifacts:
 
 ## 🏗️ Current Architecture
 
-FineTuna is a **Vite + React** app with a single Vercel API catch-all function.
+FineTuna is a **Vite + React** app deployed on Netlify with a single Netlify Function handling API traffic.
 
 Internally, the API is organized into route handlers for:
 
@@ -102,7 +102,7 @@ Internally, the API is organized into route handlers for:
 - 🟨 Google Drive
 - 📦 Artifact download
 
-The catch-all API design keeps the project within Vercel Hobby plan serverless function limits while preserving clean backend route organization.
+The Netlify function dispatches requests to internal route handlers while keeping backend code organized by feature area.
 
 ---
 
