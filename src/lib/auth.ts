@@ -51,8 +51,43 @@ export function startOAuthSignIn(provider: OAuthProvider) {
 
   const url = new URL('/auth/v1/authorize', supabaseUrl)
   url.searchParams.set('provider', provider)
-  url.searchParams.set('redirect_to', window.location.origin)
+  url.searchParams.set('redirect_to', getOAuthRedirectUrl())
   window.location.assign(url.toString())
+}
+
+function getOAuthRedirectUrl() {
+  const configuredOrigin = import.meta.env.VITE_FINETUNA_APP_URL || import.meta.env.VITE_APP_URL || ''
+  const currentOrigin = window.location.origin
+  const origin = normalizeOrigin(configuredOrigin) || currentOrigin
+  const resolvedUrl = new URL('/auth/callback', origin).toString()
+
+  if (isHostedOrigin(currentOrigin) && isLocalhostOrigin(resolvedUrl)) {
+    throw new Error('OAuth redirect is still configured for localhost. Set VITE_FINETUNA_APP_URL to this deployed site URL.')
+  }
+
+  return resolvedUrl
+}
+
+function normalizeOrigin(value: string) {
+  if (!value.trim()) return ''
+  try {
+    return new URL(value).origin
+  } catch {
+    return ''
+  }
+}
+
+function isHostedOrigin(origin: string) {
+  return !isLocalhostOrigin(origin)
+}
+
+function isLocalhostOrigin(origin: string) {
+  try {
+    const hostname = new URL(origin).hostname
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+  } catch {
+    return false
+  }
 }
 
 export function readOAuthRedirectPayload(): OAuthRedirectPayload | null {

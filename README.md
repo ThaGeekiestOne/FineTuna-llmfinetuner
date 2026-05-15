@@ -74,6 +74,10 @@ FineTuna intentionally does **not** auto-download Kaggle output after completion
 | ✉️ **Resend** | Optional transactional email provider through Supabase SMTP |
 | 🟩 **Netlify** | Hosts the frontend and serverless API function |
 
+Supabase OAuth redirects should point to:
+
+`https://finetuna.netlify.app/auth/callback`
+
 ---
 
 ## 🔐 Privacy & Safety
