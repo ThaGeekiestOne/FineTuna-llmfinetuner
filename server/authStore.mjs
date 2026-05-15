@@ -1,4 +1,3 @@
-import { scryptSync, timingSafeEqual } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { getRuntimeDir, resolveRuntimePath } from './runtimePaths.mjs'
@@ -6,6 +5,7 @@ import { getRuntimeDir, resolveRuntimePath } from './runtimePaths.mjs'
 const usersFile = () => resolveRuntimePath('users.json')
 const sessionsFile = () => resolveRuntimePath('sessions.json')
 const sessionTtlMs = 1000 * 60 * 60 * 24 * 30
+const passwordIterations = 210_000
 
 export async function createUser({ name, email, password }) {
   validateAuthInput({ name, email, password, mode: 'signup' })
@@ -18,7 +18,7 @@ export async function createUser({ name, email, password }) {
   }
 
   const now = new Date().toISOString()
-  const passwordHash = hashPassword(password)
+  const passwordHash = await hashPassword(password)
   const user = {
     id: `user-${randomHex(8)}`,
     name: name.trim(),
@@ -38,7 +38,7 @@ export async function authenticateUser({ email, password }) {
   const state = await readUsers()
   const normalizedEmail = normalizeEmail(email)
   const user = state.users.find((entry) => entry.email === normalizedEmail)
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user || !await verifyPassword(password, user.passwordHash)) {
     const error = new Error('Invalid email or password')
     error.statusCode = 401
     throw error
@@ -123,19 +123,19 @@ function validateAuthInput({ name = '', email = '', password = '', mode }) {
   }
 }
 
-function hashPassword(password) {
+async function hashPassword(password) {
   const salt = randomHex(16)
-  const derived = scryptSync(password, salt, 64).toString('hex')
-  return `${salt}:${derived}`
+  const derived = await derivePasswordHash(password, salt)
+  return `pbkdf2:${salt}:${derived}`
 }
 
-function verifyPassword(password, stored) {
-  const [salt, expectedHash] = String(stored ?? '').split(':')
+async function verifyPassword(password, stored) {
+  const parts = String(stored ?? '').split(':')
+  const [, salt, expectedHash] = parts[0] === 'pbkdf2' ? parts : ['', parts[0], parts[1]]
   if (!salt || !expectedHash) return false
-  const actualHash = scryptSync(password, salt, 64)
-  const expected = Buffer.from(expectedHash, 'hex')
-  if (actualHash.length !== expected.length) return false
-  return timingSafeEqual(actualHash, expected)
+  if (parts[0] !== 'pbkdf2') return false
+  const actualHash = await derivePasswordHash(password, salt)
+  return timingSafeEqualHex(actualHash, expectedHash)
 }
 
 function toPublicUser(user) {
@@ -189,4 +189,37 @@ function randomHex(byteLength) {
   }
   globalThis.crypto.getRandomValues(values)
   return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('')
+}
+
+async function derivePasswordHash(password, salt) {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Web Crypto PBKDF2 is not available')
+  }
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(String(password)),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  )
+  const bits = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt: Buffer.from(salt, 'hex'),
+      iterations: passwordIterations,
+    },
+    key,
+    512,
+  )
+  return Buffer.from(bits).toString('hex')
+}
+
+function timingSafeEqualHex(left, right) {
+  if (left.length !== right.length) return false
+  let diff = 0
+  for (let index = 0; index < left.length; index += 1) {
+    diff |= left.charCodeAt(index) ^ right.charCodeAt(index)
+  }
+  return diff === 0
 }

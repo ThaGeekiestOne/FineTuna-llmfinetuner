@@ -33,14 +33,14 @@ async function readOrCreateSecret() {
   if (existsSync(secretFile)) {
     return Buffer.from(await readFile(secretFile, 'utf8'), 'base64')
   }
-  const secret = randomBytesBuffer(32)
+  const secret = secureRandomBuffer(32)
   await writeFile(secretFile, secret.toString('base64'))
   return secret
 }
 
 export async function encryptJsonPayload(payload) {
   const secret = await readOrCreateSecret()
-  const iv = randomBytesBuffer(12)
+  const iv = secureRandomBuffer(12)
   const key = await importAesKey(secret, ['encrypt'])
   const plaintext = Buffer.from(JSON.stringify(payload), 'utf8')
   const encrypted = Buffer.from(await globalThis.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext))
@@ -68,7 +68,7 @@ export async function decryptJsonPayload(envelope) {
   return JSON.parse(plaintext.toString('utf8'))
 }
 
-function randomBytesBuffer(byteLength) {
+function secureRandomBuffer(byteLength) {
   const values = new Uint8Array(byteLength)
   if (!globalThis.crypto?.getRandomValues) {
     throw new Error('Secure random source is not available')
