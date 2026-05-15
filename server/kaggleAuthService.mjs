@@ -1,5 +1,4 @@
 import { mkdir } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawn } from 'node:child_process'
 import { buildKaggleOAuthEnv, getKaggleOAuthHome, getKaggleOAuthStatus } from './kaggleAuthRuntime.mjs'
@@ -111,17 +110,21 @@ function appendLog(chunk) {
 }
 
 function ensureKaggleOAuthSupported() {
-  if (process.env.NETLIFY) {
+  if (isServerlessRuntime()) {
     const error = new Error('Kaggle OAuth login cannot run on Netlify serverless because it needs a long-lived Kaggle CLI process. Use Quick Connect with your Kaggle username and API key instead.')
     error.statusCode = 400
     throw error
   }
 
-  if (!existsSync(kaggleExe)) {
+  if (!process.env.LOCALAPPDATA) {
     const error = new Error('Kaggle CLI was not found on this machine. Use Quick Connect with your Kaggle username and API key, or install the Kaggle CLI before using OAuth login.')
     error.statusCode = 400
     throw error
   }
+}
+
+function isServerlessRuntime() {
+  return Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT)
 }
 
 async function waitForOAuthPrompt() {
