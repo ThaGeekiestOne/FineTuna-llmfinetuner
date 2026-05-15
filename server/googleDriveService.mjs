@@ -177,12 +177,20 @@ function buildDriveSearch(search) {
 
 function getGoogleClientId() {
   const value = process.env.GOOGLE_DRIVE_CLIENT_ID || ''
-  if (!value) throw new Error('GOOGLE_DRIVE_CLIENT_ID is not configured')
+  if (!value) {
+    const error = new Error('GOOGLE_DRIVE_CLIENT_ID is not configured')
+    error.statusCode = 400
+    throw error
+  }
   return value
 }
 
 function getGoogleClientSecret() {
   const value = process.env.GOOGLE_DRIVE_CLIENT_SECRET || ''
-  if (!value) throw new Error('GOOGLE_DRIVE_CLIENT_SECRET is not configured')
+  if (!value) {
+    const error = new Error('GOOGLE_DRIVE_CLIENT_SECRET is not configured')
+    error.statusCode = 400
+    throw error
+  }
   return value
 }

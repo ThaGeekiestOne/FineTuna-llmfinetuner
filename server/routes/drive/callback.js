@@ -1,4 +1,4 @@
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { readCookie, readSupabaseAccessToken, requireAuthenticatedUser } from '../../authSession.mjs'
 import { completeGoogleDriveAuth } from '../../googleDriveService.mjs'
 
 const driveStateCookieName = 'finetuna_drive_state'
@@ -16,7 +16,7 @@ export default async function handler(request, response) {
     const code = url.searchParams.get('code') ?? ''
     const state = url.searchParams.get('state') ?? ''
     const storedState = readCookie(request, driveStateCookieName)
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
 
     if (!code || !state || !storedState || state !== storedState) {
       response.statusCode = 400

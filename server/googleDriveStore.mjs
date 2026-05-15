@@ -17,6 +17,7 @@ function getConnectionFile() {
 
 export async function saveGoogleDriveConnection(connection, userId = '', accessToken = '') {
   validateGoogleDriveConnection(connection)
+  ensurePersistentStorage(userId, accessToken)
   if (shouldUseSupabaseData(accessToken) && userId) {
     const payload = await encryptJsonPayload(connection)
     await upsertRow({
@@ -50,6 +51,7 @@ export async function getGoogleDriveConnection(userId = '', accessToken = '') {
     return decryptJsonPayload(rows[0].payload)
   }
 
+  ensurePersistentStorage(userId, accessToken)
   return loadEncryptedJson(getConnectionFile())
 }
 
@@ -63,9 +65,23 @@ export async function deleteGoogleDriveConnection(userId = '', accessToken = '')
     return true
   }
 
+  ensurePersistentStorage(userId, accessToken)
   if (!existsSync(getConnectionFile())) return true
   await rm(getConnectionFile(), { force: true })
   return true
+}
+
+function ensurePersistentStorage(userId, accessToken) {
+  if (!isServerlessRuntime()) return
+  if (shouldUseSupabaseData(accessToken) && userId) return
+
+  const error = new Error('Google Drive needs Supabase storage on Netlify. Make sure you are signed in and that the provider_credentials table from docs/supabase-schema.sql exists.')
+  error.statusCode = 400
+  throw error
+}
+
+function isServerlessRuntime() {
+  return Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT)
 }
 
 function validateGoogleDriveConnection(connection) {
