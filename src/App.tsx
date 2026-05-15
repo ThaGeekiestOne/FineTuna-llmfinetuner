@@ -3,7 +3,7 @@ import './App.css'
 import { fallbackCustomTemplate, models, templates, type DomainTemplate, type ModelCard, type Technique, type TrainingExample } from './lib/catalog'
 import { completeOAuthSignIn, getAuthSession, readOAuthRedirectPayload, signIn, signOut, signUp, startOAuthSignIn, type AuthUser, type OAuthProvider } from './lib/auth'
 import { disconnectGoogleDrive, getGoogleDriveStatus, startGoogleDriveAuth, type GoogleDriveStatus } from './lib/drive'
-import { buildKaggleArtifactUrl, confirmKaggleOAuthLogin, createStoredJob, deleteStoredJob, downloadKaggleJobOutput, fetchKaggleJobStatus, getKaggleCredentialsStatus, getKaggleOAuthStatus, listStoredJobs, revokeKaggleOAuthLogin, saveKaggleCredentials, startKaggleJob, startKaggleOAuthLogin, type KaggleOAuthStatus, type StoredJob, updateStoredJob } from './lib/jobs'
+import { buildKaggleArtifactUrl, createStoredJob, deleteStoredJob, downloadKaggleJobOutput, fetchKaggleJobStatus, getKaggleCredentialsStatus, listStoredJobs, saveKaggleCredentials, startKaggleJob, type StoredJob, updateStoredJob } from './lib/jobs'
 import { fetchProviderCatalog } from './lib/providers'
 import { buildTechniqueReport, calculateHyperparameters, estimateRuntimeHours, generateTrainingScript, mergeDatasets, parseDatasetText, snippets, validateDataset, type Hyperparameters } from './lib/training'
 
@@ -95,11 +95,6 @@ function App() {
   const [kaggleUsername, setKaggleUsername] = useState('')
   const [kaggleUsernameDraft, setKaggleUsernameDraft] = useState('')
   const [kaggleKeyDraft, setKaggleKeyDraft] = useState('')
-  const [kaggleOAuth, setKaggleOAuth] = useState<KaggleOAuthStatus | null>(null)
-  const [kaggleOAuthCode, setKaggleOAuthCode] = useState('')
-  const [kaggleOAuthLoading, setKaggleOAuthLoading] = useState(false)
-  const [kaggleConnectionNotice, setKaggleConnectionNotice] = useState('')
-  const [kaggleConnectionError, setKaggleConnectionError] = useState('')
   const [job, setJob] = useState<StoredJob | null>(null)
   const [historyJobs, setHistoryJobs] = useState<StoredJob[]>([])
   const [historyError, setHistoryError] = useState('')
@@ -234,7 +229,6 @@ function App() {
     void loadHuggingFaceModels('')
     void loadStoredJobs()
     void loadKaggleCredentialStatus()
-    void loadKaggleOAuthState()
     void loadGoogleDriveConnection()
   }, [authUser])
 
@@ -470,88 +464,9 @@ function App() {
     }
   }
 
-  async function loadKaggleOAuthState() {
-    try {
-      const status = await getKaggleOAuthStatus()
-      setKaggleOAuth(status)
-      if (status.oauth.configured && status.oauth.username) {
-        setCredentials('verified')
-        setKaggleUsername(status.oauth.username)
-        setKaggleUsernameDraft(status.oauth.username)
-      }
-    } catch {}
-  }
-
   function updateHyperparameter<K extends keyof Hyperparameters>(key: K, value: Hyperparameters[K]) {
     if (autoTune) setAutoTune(false)
     setCustomHyperparameters((current) => ({ ...current, [key]: value }))
-  }
-
-  async function beginKaggleOAuthLogin() {
-    const oauthWindow = window.open('', 'finetuna-kaggle-oauth', 'width=540,height=720')
-    try {
-      setHistoryError('')
-      setKaggleConnectionError('')
-      setKaggleConnectionNotice('Starting Kaggle OAuth...')
-      setKaggleOAuthLoading(true)
-      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', 'Preparing Kaggle OAuth login...', false)
-      const status = await startKaggleOAuthLogin(true)
-      setKaggleOAuth(status)
-      if (status.session?.url) {
-        if (oauthWindow) oauthWindow.location.href = status.session.url
-        setKaggleConnectionNotice('Kaggle OAuth opened. Finish sign-in, then paste the verification code below.')
-        return
-      }
-      const message = status.session?.error || 'Kaggle OAuth URL was not created'
-      setKaggleConnectionError(message)
-      setHistoryError(message)
-      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', message, true)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not start Kaggle OAuth login'
-      setHistoryError(message)
-      setKaggleConnectionError(message)
-      setKaggleConnectionNotice('')
-      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', message, true)
-    } finally {
-      setKaggleOAuthLoading(false)
-    }
-  }
-
-  async function submitKaggleOAuthCode() {
-    try {
-      setKaggleConnectionError('')
-      setKaggleConnectionNotice('Verifying Kaggle OAuth code...')
-      setKaggleOAuthLoading(true)
-      const status = await confirmKaggleOAuthLogin(kaggleOAuthCode)
-      setKaggleOAuth(status)
-      setKaggleOAuthCode('')
-      await loadKaggleCredentialStatus()
-      await loadKaggleOAuthState()
-      setHistoryError('')
-      setKaggleConnectionNotice('Kaggle OAuth connected.')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not confirm Kaggle OAuth code'
-      setHistoryError(message)
-      setKaggleConnectionError(message)
-    } finally {
-      setKaggleOAuthLoading(false)
-    }
-  }
-
-  async function disconnectKaggleOAuth() {
-    try {
-      const status = await revokeKaggleOAuthLogin()
-      setKaggleOAuth(status)
-      await loadKaggleCredentialStatus()
-      await loadKaggleOAuthState()
-      setHistoryError('')
-      setKaggleConnectionError('')
-      setKaggleConnectionNotice('Kaggle OAuth disconnected.')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not revoke Kaggle OAuth login'
-      setHistoryError(message)
-      setKaggleConnectionError(message)
-    }
   }
 
   async function loadHuggingFaceModels(search = query) {
@@ -848,7 +763,6 @@ function App() {
       setHistoryJobs([])
       setJob(null)
       setCredentials('missing')
-      setKaggleOAuth(null)
       setHistoryError('')
       setIsStartingTraining(false)
       setSection('dashboard')
@@ -1403,51 +1317,21 @@ function App() {
                   </div>
 
                   <div className="settings-subcard">
-                    <h3>Kaggle OAuth Login</h3>
+                    <h3>Kaggle Quick Connect</h3>
+                    <p>Use your Kaggle username and API key. This is the supported production connection method for Netlify deployments.</p>
+                    <div className="settings-form-grid">
+                      <label className="settings-field">Username<input value={kaggleUsernameDraft} onChange={(event) => setKaggleUsernameDraft(event.target.value)} placeholder="Kaggle username" /></label>
+                      <label className="settings-field">API key<input type="password" value={kaggleKeyDraft} onChange={(event) => setKaggleKeyDraft(event.target.value)} placeholder="Kaggle API key" /></label>
+                    </div>
                     <div className="settings-actions">
-                      <button className="primary" disabled={kaggleOAuthLoading} onClick={() => void beginKaggleOAuthLogin()}>{kaggleOAuthLoading ? 'Working...' : 'Start OAuth login'}</button>
-                      <button className="danger" disabled={kaggleOAuthLoading} onClick={() => void disconnectKaggleOAuth()}>Disconnect OAuth</button>
+                      <button className="primary" onClick={() => void saveKaggleCredentialsDraft()}>Save Kaggle credentials</button>
                     </div>
-                    {kaggleConnectionNotice && <p className="info">{kaggleConnectionNotice}</p>}
-                    {kaggleConnectionError && <p className="warning">{kaggleConnectionError}</p>}
-                    {kaggleOAuth?.session && (
-                      <div className="oauth-box">
-                        <strong>{kaggleOAuth.session.status === 'awaiting_code' ? 'Waiting for Kaggle verification' : `Kaggle OAuth: ${kaggleOAuth.session.status}`}</strong>
-                        {kaggleOAuth.session.url && <a className="inline-link" href={kaggleOAuth.session.url} target="_blank" rel="noreferrer">Open Kaggle authorization</a>}
-                        {kaggleOAuth.session.status === 'awaiting_code' && (
-                          <>
-                            <p>After you finish the Kaggle sign-in in the new tab, paste the verification code here.</p>
-                            <label className="settings-field">Verification code<input value={kaggleOAuthCode} onChange={(event) => setKaggleOAuthCode(event.target.value)} placeholder="Paste code from Kaggle" /></label>
-                            <div className="settings-actions">
-                              <button className="primary" disabled={kaggleOAuthLoading} onClick={() => void submitKaggleOAuthCode()}>Confirm code</button>
-                              <span className="pill">{kaggleOAuth.session.status}</span>
-                            </div>
-                          </>
-                        )}
-                        {kaggleOAuth.session.error && <p className="warning">{kaggleOAuth.session.error}</p>}
-                        {kaggleOAuth.session.logs && <pre className="compact-log">{kaggleOAuth.session.logs}</pre>}
-                      </div>
-                    )}
-                    {kaggleOAuth?.oauth.configured && <span className="pill ok">OAuth connected{` `}{kaggleOAuth.oauth.username ? `for ${kaggleOAuth.oauth.username}` : ''}</span>}
-                  </div>
-
-                  <div className="settings-columns">
-                    <div className="settings-subcard">
-                      <h3>Quick Connect</h3>
-                      <p>Use your Kaggle username and API key directly. This is the fastest working path for backend submissions.</p>
-                      <div className="settings-form-grid">
-                        <label className="settings-field">Username<input value={kaggleUsernameDraft} onChange={(event) => setKaggleUsernameDraft(event.target.value)} placeholder="Kaggle username" /></label>
-                        <label className="settings-field">API key<input type="password" value={kaggleKeyDraft} onChange={(event) => setKaggleKeyDraft(event.target.value)} placeholder="Kaggle API key" /></label>
-                      </div>
-                      <div className="settings-actions">
-                        <button className="primary" onClick={() => void saveKaggleCredentialsDraft()}>Save credentials</button>
-                      </div>
-                    </div>
+                    <p className="info">Create or copy your API token from Kaggle: Account Settings {'->'} API {'->'} Create New Token.</p>
                   </div>
 
                   <div className="settings-checklist">
-                    <div><strong>1.</strong><span>Choose either OAuth login or username and API key.</span></div>
-                    <div><strong>2.</strong><span>Connect Kaggle once in Settings.</span></div>
+                    <div><strong>1.</strong><span>Create a Kaggle API token from your Kaggle account settings.</span></div>
+                    <div><strong>2.</strong><span>Paste the username and key here once.</span></div>
                     <div><strong>3.</strong><span>Launch jobs from the training page.</span></div>
                   </div>
                 </div>
