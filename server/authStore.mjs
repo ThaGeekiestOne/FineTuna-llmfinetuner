@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { scryptSync, timingSafeEqual } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { getRuntimeDir, resolveRuntimePath } from './runtimePaths.mjs'
@@ -20,7 +20,7 @@ export async function createUser({ name, email, password }) {
   const now = new Date().toISOString()
   const passwordHash = hashPassword(password)
   const user = {
-    id: `user-${randomBytes(8).toString('hex')}`,
+    id: `user-${randomHex(8)}`,
     name: name.trim(),
     email: normalizedEmail,
     passwordHash,
@@ -55,7 +55,7 @@ export async function getUserById(id) {
 export async function createSession(userId) {
   const state = await readSessions()
   const now = Date.now()
-  const token = randomBytes(32).toString('hex')
+  const token = randomHex(32)
   state.sessions = state.sessions.filter((session) => Date.parse(session.expiresAt) > now && session.userId !== userId)
   state.sessions.push({
     token,
@@ -124,7 +124,7 @@ function validateAuthInput({ name = '', email = '', password = '', mode }) {
 }
 
 function hashPassword(password) {
-  const salt = randomBytes(16).toString('hex')
+  const salt = randomHex(16)
   const derived = scryptSync(password, salt, 64).toString('hex')
   return `${salt}:${derived}`
 }
@@ -180,4 +180,13 @@ async function writeSessions(state) {
 
 async function ensureRuntime() {
   await mkdir(getRuntimeDir(), { recursive: true })
+}
+
+function randomHex(byteLength) {
+  const values = new Uint8Array(byteLength)
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error('Secure random source is not available')
+  }
+  globalThis.crypto.getRandomValues(values)
+  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('')
 }
