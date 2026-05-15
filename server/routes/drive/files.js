@@ -1,11 +1,11 @@
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../authSession.mjs'
 import { listGoogleDriveFiles } from '../../googleDriveService.mjs'
 
 export default async function handler(request, response) {
   try {
     const user = await requireAuthenticatedUser(request, response)
     if (request.method !== 'GET') return send(response, 405, { error: 'Method not allowed' })
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const url = new URL(request.url ?? 'http://localhost/api/drive/files', 'http://localhost')
     const search = url.searchParams.get('search') ?? ''
     const payload = await listGoogleDriveFiles(user.id, accessToken, search)

@@ -1,5 +1,5 @@
 import { getJob, updateJob } from '../../../jobsStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../../authSession.mjs'
 import { startKaggleExecution } from '../../../kaggleService.mjs'
 
 export default async function handler(request, response) {
@@ -9,7 +9,7 @@ export default async function handler(request, response) {
     const body = await readJson(request)
     if (!body?.jobId || typeof body.jobId !== 'string') return send(response, 400, { error: 'jobId is required' })
     if (body.examples && !Array.isArray(body.examples)) return send(response, 400, { error: 'examples must be an array' })
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const job = await getJob(body.jobId, accessToken)
     if (job && job.userId !== user.id) return send(response, 404, { error: 'Job not found' })
     if (!job) return send(response, 404, { error: 'Job not found' })

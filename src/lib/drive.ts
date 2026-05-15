@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authTransport'
+
 export type GoogleDriveStatus = {
   configured: boolean
   email: string | null
@@ -8,21 +10,21 @@ export type GoogleDriveStatus = {
 }
 
 export async function getGoogleDriveStatus(): Promise<GoogleDriveStatus> {
-  const response = await fetch('/api/drive/auth')
+  const response = await authenticatedFetch('/api/drive/auth')
   const payload = (await response.json().catch(() => ({}))) as GoogleDriveStatus & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not load Google Drive status (${response.status})`)
   return payload
 }
 
 export async function startGoogleDriveAuth(): Promise<GoogleDriveStatus> {
-  const response = await fetch('/api/drive/auth', { method: 'POST' })
+  const response = await authenticatedFetch('/api/drive/auth', { method: 'POST' })
   const payload = (await response.json().catch(() => ({}))) as GoogleDriveStatus & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not start Google Drive OAuth (${response.status})`)
   return payload
 }
 
 export async function disconnectGoogleDrive(): Promise<GoogleDriveStatus> {
-  const response = await fetch('/api/drive/auth', { method: 'DELETE' })
+  const response = await authenticatedFetch('/api/drive/auth', { method: 'DELETE' })
   const payload = (await response.json().catch(() => ({}))) as GoogleDriveStatus & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not disconnect Google Drive (${response.status})`)
   return payload

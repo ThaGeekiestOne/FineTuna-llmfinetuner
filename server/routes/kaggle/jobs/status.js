@@ -1,5 +1,5 @@
 import { getKaggleExecutionStatus } from '../../../kaggleService.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../../authSession.mjs'
 import { getJob, updateJob } from '../../../jobsStore.mjs'
 
 export default async function handler(request, response) {
@@ -8,7 +8,7 @@ export default async function handler(request, response) {
     if (request.method !== 'GET') return send(response, 405, { error: 'Method not allowed' })
     const url = new URL(request.url ?? 'http://localhost/api/kaggle/jobs/status', 'http://localhost')
     const jobId = url.searchParams.get('jobId') ?? ''
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const job = await getJob(jobId, accessToken)
     if (job && job.userId !== user.id) return send(response, 404, { error: 'Kaggle job not found' })
     if (!job || !job.kaggleKernelRef) return send(response, 404, { error: 'Kaggle job not found' })

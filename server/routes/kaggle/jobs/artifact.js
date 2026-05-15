@@ -1,6 +1,6 @@
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { basename, relative, resolve, sep } from 'node:path'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../../authSession.mjs'
 import { getJob } from '../../../jobsStore.mjs'
 import { resolveRuntimePath } from '../../../runtimePaths.mjs'
 
@@ -14,7 +14,7 @@ export default async function handler(request, response) {
     const file = url.searchParams.get('file') ?? ''
     if (!jobId || !file) return send(response, 400, { error: 'Missing jobId or file' })
 
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const job = await getJob(jobId, accessToken)
     if (job && job.userId !== user.id) return send(response, 404, { error: 'Artifact not found' })
     if (!job) return send(response, 404, { error: 'Artifact not found' })

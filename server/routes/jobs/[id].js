@@ -1,11 +1,11 @@
 import { deleteJob, getJob, updateJob } from '../../jobsStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../authSession.mjs'
 import { sendJson } from '../jobs.js'
 
 export default async function handler(request, response) {
   try {
     const user = await requireAuthenticatedUser(request, response)
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const id = readJobId(request)
     if (!id) return sendJson(response, 400, { error: 'Job id is required' })
     const existing = await getJob(id, accessToken)

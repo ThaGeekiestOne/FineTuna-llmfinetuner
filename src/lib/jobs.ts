@@ -1,4 +1,5 @@
 import type { Hyperparameters } from './training'
+import { authenticatedFetch } from './authTransport'
 
 export type StoredJob = {
   id: string
@@ -44,14 +45,14 @@ export type KaggleOAuthStatus = {
 }
 
 export async function listStoredJobs(): Promise<StoredJob[]> {
-  const response = await fetch('/api/jobs')
+  const response = await authenticatedFetch('/api/jobs')
   if (!response.ok) throw new Error(`Could not load jobs (${response.status})`)
   const payload = (await response.json()) as { jobs: StoredJob[] }
   return payload.jobs
 }
 
 export async function createStoredJob(input: Partial<StoredJob>): Promise<StoredJob> {
-  const response = await fetch('/api/jobs', {
+  const response = await authenticatedFetch('/api/jobs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -62,7 +63,7 @@ export async function createStoredJob(input: Partial<StoredJob>): Promise<Stored
 }
 
 export async function updateStoredJob(id: string, patch: Partial<StoredJob>): Promise<StoredJob> {
-  const response = await fetch(`/api/jobs/${id}`, {
+  const response = await authenticatedFetch(`/api/jobs/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
@@ -73,7 +74,7 @@ export async function updateStoredJob(id: string, patch: Partial<StoredJob>): Pr
 }
 
 export async function deleteStoredJob(id: string): Promise<void> {
-  const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+  const response = await authenticatedFetch(`/api/jobs/${id}`, { method: 'DELETE' })
   if (!response.ok && response.status !== 204) {
     const payload = (await response.json().catch(() => ({}))) as { error?: string }
     throw new Error(payload.error ?? `Could not delete job (${response.status})`)
@@ -81,7 +82,7 @@ export async function deleteStoredJob(id: string): Promise<void> {
 }
 
 export async function saveKaggleCredentials(input: { username: string; key: string }) {
-  const response = await fetch('/api/kaggle/credentials', {
+  const response = await authenticatedFetch('/api/kaggle/credentials', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -92,14 +93,14 @@ export async function saveKaggleCredentials(input: { username: string; key: stri
 }
 
 export async function getKaggleCredentialsStatus() {
-  const response = await fetch('/api/kaggle/credentials')
+  const response = await authenticatedFetch('/api/kaggle/credentials')
   const payload = (await response.json().catch(() => ({}))) as { configured?: boolean; username?: string; authMethod?: string | null; error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not load Kaggle credential status (${response.status})`)
   return payload
 }
 
 export async function startKaggleJob(jobId: string, examples: Array<{ instruction: string; response: string }>) {
-  const response = await fetch('/api/kaggle/jobs/start', {
+  const response = await authenticatedFetch('/api/kaggle/jobs/start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jobId, examples }),
@@ -110,14 +111,14 @@ export async function startKaggleJob(jobId: string, examples: Array<{ instructio
 }
 
 export async function fetchKaggleJobStatus(jobId: string) {
-  const response = await fetch(`/api/kaggle/jobs/status?jobId=${encodeURIComponent(jobId)}`)
+  const response = await authenticatedFetch(`/api/kaggle/jobs/status?jobId=${encodeURIComponent(jobId)}`)
   const payload = (await response.json().catch(() => ({}))) as { job?: StoredJob; error?: string }
   if (!response.ok || !payload.job) throw new Error(payload.error ?? `Could not read Kaggle status (${response.status})`)
   return payload.job
 }
 
 export async function downloadKaggleJobOutput(jobId: string) {
-  const response = await fetch('/api/kaggle/jobs/download', {
+  const response = await authenticatedFetch('/api/kaggle/jobs/download', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jobId, confirmOutputDownload: true }),
@@ -133,14 +134,14 @@ export function buildKaggleArtifactUrl(jobId: string, file: string) {
 }
 
 export async function getKaggleOAuthStatus(): Promise<KaggleOAuthStatus> {
-  const response = await fetch('/api/kaggle/auth')
+  const response = await authenticatedFetch('/api/kaggle/auth')
   const payload = (await response.json().catch(() => ({}))) as KaggleOAuthStatus & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not load Kaggle OAuth status (${response.status})`)
   return payload
 }
 
 export async function startKaggleOAuthLogin(force = false): Promise<KaggleOAuthStatus> {
-  const response = await fetch('/api/kaggle/auth', {
+  const response = await authenticatedFetch('/api/kaggle/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'start', force }),
@@ -151,7 +152,7 @@ export async function startKaggleOAuthLogin(force = false): Promise<KaggleOAuthS
 }
 
 export async function confirmKaggleOAuthLogin(code: string): Promise<KaggleOAuthStatus> {
-  const response = await fetch('/api/kaggle/auth', {
+  const response = await authenticatedFetch('/api/kaggle/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'confirm', code }),
@@ -162,7 +163,7 @@ export async function confirmKaggleOAuthLogin(code: string): Promise<KaggleOAuth
 }
 
 export async function revokeKaggleOAuthLogin(): Promise<KaggleOAuthStatus> {
-  const response = await fetch('/api/kaggle/auth', { method: 'DELETE' })
+  const response = await authenticatedFetch('/api/kaggle/auth', { method: 'DELETE' })
   const payload = (await response.json().catch(() => ({}))) as KaggleOAuthStatus & { revoked?: boolean; error?: string }
   if (!response.ok) throw new Error(payload.error ?? `Could not revoke Kaggle OAuth login (${response.status})`)
   return payload

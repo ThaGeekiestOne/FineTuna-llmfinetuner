@@ -1,4 +1,4 @@
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../authSession.mjs'
 import { buildGoogleDriveAuthUrl, createGoogleDriveAuthState, disconnectGoogleDrive, getGoogleDriveStatus } from '../../googleDriveService.mjs'
 
 const driveStateCookieName = 'finetuna_drive_state'
@@ -6,7 +6,7 @@ const driveStateCookieName = 'finetuna_drive_state'
 export default async function handler(request, response) {
   try {
     const user = await requireAuthenticatedUser(request, response)
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
 
     if (request.method === 'GET') {
       return send(response, 200, await getGoogleDriveStatus(user.id, accessToken))

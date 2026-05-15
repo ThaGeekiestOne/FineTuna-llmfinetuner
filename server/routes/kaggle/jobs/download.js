@@ -1,5 +1,5 @@
 import { applyCompletedKaggleOutput, downloadKaggleExecutionOutput } from '../../../kaggleService.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../../../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../../authSession.mjs'
 import { getJob, updateJob } from '../../../jobsStore.mjs'
 
 export default async function handler(request, response) {
@@ -11,7 +11,7 @@ export default async function handler(request, response) {
     if (body.confirmOutputDownload !== true) {
       return send(response, 400, { error: 'Explicit output download confirmation is required' })
     }
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     const job = await getJob(jobId, accessToken)
     if (job && job.userId !== user.id) return send(response, 404, { error: 'Kaggle job not found' })
     if (!job || !job.kaggleKernelRef) return send(response, 404, { error: 'Kaggle job not found' })

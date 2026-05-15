@@ -4,6 +4,7 @@ import { getSupabaseUser, isSupabaseAuthConfigured, refreshSupabaseSession, sign
 export const sessionCookieName = 'finetuna_session'
 export const supabaseAccessCookieName = 'finetuna_sb_access'
 export const supabaseRefreshCookieName = 'finetuna_sb_refresh'
+export const supabaseRefreshHeaderName = 'x-finetuna-refresh-token'
 
 export async function readAuthenticatedUser(request, response = null) {
   if (isSupabaseAuthConfigured()) {
@@ -64,6 +65,10 @@ export function readSessionToken(request) {
   return readCookie(request, sessionCookieName)
 }
 
+export function readSupabaseAccessToken(request) {
+  return readCookie(request, supabaseAccessCookieName) || readBearerToken(request)
+}
+
 export function readCookie(request, key) {
   const header = request.headers?.cookie
   if (!header) return ''
@@ -100,13 +105,25 @@ function clearSupabaseCookie(name) {
 }
 
 async function readSupabaseSession(request, response) {
-  const accessToken = readCookie(request, supabaseAccessCookieName)
-  const refreshToken = readCookie(request, supabaseRefreshCookieName)
+  const accessCookie = readCookie(request, supabaseAccessCookieName)
+  const refreshCookie = readCookie(request, supabaseRefreshCookieName)
+  const bearerAccessToken = readBearerToken(request)
+  const accessToken = accessCookie || bearerAccessToken
+  const refreshToken = refreshCookie || readHeader(request, supabaseRefreshHeaderName)
 
   if (accessToken) {
     try {
       const user = await getSupabaseUser(accessToken)
-      if (user) return { user, provider: 'supabase' }
+      if (user) {
+        if (response && (!accessCookie || (!refreshCookie && refreshToken))) {
+          response.setHeader('Set-Cookie', [
+            buildSupabaseCookie(supabaseAccessCookieName, accessToken, 60 * 60),
+            ...(refreshToken ? [buildSupabaseCookie(supabaseRefreshCookieName, refreshToken, 60 * 60 * 24 * 30)] : []),
+            clearLocalSessionCookie(),
+          ])
+        }
+        return { user, provider: 'supabase' }
+      }
     } catch {}
   }
 
@@ -123,4 +140,14 @@ async function readSupabaseSession(request, response) {
   } catch {
     return null
   }
+}
+
+function readHeader(request, key) {
+  return request.headers?.[key.toLowerCase()] ?? request.headers?.[key] ?? ''
+}
+
+function readBearerToken(request) {
+  const authorization = readHeader(request, 'authorization')
+  const match = String(authorization).match(/^Bearer\s+(.+)$/i)
+  return match?.[1]?.trim() ?? ''
 }

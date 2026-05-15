@@ -1,10 +1,10 @@
 import { createJob, listJobs } from '../jobsStore.mjs'
-import { readCookie, requireAuthenticatedUser, supabaseAccessCookieName } from '../authSession.mjs'
+import { readSupabaseAccessToken, requireAuthenticatedUser } from '../authSession.mjs'
 
 export default async function handler(request, response) {
   try {
     const user = await requireAuthenticatedUser(request, response)
-    const accessToken = readCookie(request, supabaseAccessCookieName)
+    const accessToken = readSupabaseAccessToken(request)
     if (request.method === 'GET') {
       const jobs = await listJobs(user.id, accessToken)
       return sendJson(response, 200, { jobs })
