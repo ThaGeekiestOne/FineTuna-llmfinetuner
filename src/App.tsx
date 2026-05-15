@@ -97,6 +97,9 @@ function App() {
   const [kaggleKeyDraft, setKaggleKeyDraft] = useState('')
   const [kaggleOAuth, setKaggleOAuth] = useState<KaggleOAuthStatus | null>(null)
   const [kaggleOAuthCode, setKaggleOAuthCode] = useState('')
+  const [kaggleOAuthLoading, setKaggleOAuthLoading] = useState(false)
+  const [kaggleConnectionNotice, setKaggleConnectionNotice] = useState('')
+  const [kaggleConnectionError, setKaggleConnectionError] = useState('')
   const [job, setJob] = useState<StoredJob | null>(null)
   const [historyJobs, setHistoryJobs] = useState<StoredJob[]>([])
   const [historyError, setHistoryError] = useState('')
@@ -485,30 +488,53 @@ function App() {
   }
 
   async function beginKaggleOAuthLogin() {
+    const oauthWindow = window.open('', 'finetuna-kaggle-oauth', 'width=540,height=720')
     try {
       setHistoryError('')
+      setKaggleConnectionError('')
+      setKaggleConnectionNotice('Starting Kaggle OAuth...')
+      setKaggleOAuthLoading(true)
+      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', 'Preparing Kaggle OAuth login...', false)
       const status = await startKaggleOAuthLogin(true)
       setKaggleOAuth(status)
       if (status.session?.url) {
-        window.open(status.session.url, '_blank', 'noopener,noreferrer')
+        if (oauthWindow) oauthWindow.location.href = status.session.url
+        setKaggleConnectionNotice('Kaggle OAuth opened. Finish sign-in, then paste the verification code below.')
         return
       }
-      setHistoryError('Kaggle OAuth URL was not created')
+      const message = status.session?.error || 'Kaggle OAuth URL was not created'
+      setKaggleConnectionError(message)
+      setHistoryError(message)
+      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', message, true)
     } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : 'Could not start Kaggle OAuth login')
+      const message = error instanceof Error ? error.message : 'Could not start Kaggle OAuth login'
+      setHistoryError(message)
+      setKaggleConnectionError(message)
+      setKaggleConnectionNotice('')
+      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Kaggle', message, true)
+    } finally {
+      setKaggleOAuthLoading(false)
     }
   }
 
   async function submitKaggleOAuthCode() {
     try {
+      setKaggleConnectionError('')
+      setKaggleConnectionNotice('Verifying Kaggle OAuth code...')
+      setKaggleOAuthLoading(true)
       const status = await confirmKaggleOAuthLogin(kaggleOAuthCode)
       setKaggleOAuth(status)
       setKaggleOAuthCode('')
       await loadKaggleCredentialStatus()
       await loadKaggleOAuthState()
       setHistoryError('')
+      setKaggleConnectionNotice('Kaggle OAuth connected.')
     } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : 'Could not confirm Kaggle OAuth code')
+      const message = error instanceof Error ? error.message : 'Could not confirm Kaggle OAuth code'
+      setHistoryError(message)
+      setKaggleConnectionError(message)
+    } finally {
+      setKaggleOAuthLoading(false)
     }
   }
 
@@ -519,8 +545,12 @@ function App() {
       await loadKaggleCredentialStatus()
       await loadKaggleOAuthState()
       setHistoryError('')
+      setKaggleConnectionError('')
+      setKaggleConnectionNotice('Kaggle OAuth disconnected.')
     } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : 'Could not revoke Kaggle OAuth login')
+      const message = error instanceof Error ? error.message : 'Could not revoke Kaggle OAuth login'
+      setHistoryError(message)
+      setKaggleConnectionError(message)
     }
   }
 
@@ -570,7 +600,7 @@ function App() {
         setTemplateNotice('Popup blocked. Allow popups for this site and try Google Drive connect again.')
         return
       }
-      renderOauthPopup(oauthWindow, 'Connecting to Google Drive...', false)
+      renderOauthPopup(oauthWindow, 'FineTuna Google Drive', 'Connecting to Google Drive...', false)
       const status = await startGoogleDriveAuth()
       setGoogleDrive(status)
       if (status.url) {
@@ -578,13 +608,13 @@ function App() {
         setTemplateNotice('Google Drive OAuth opened. Finish the consent flow in the popup to connect this draft.')
         return
       }
-      renderOauthPopup(oauthWindow, 'Google Drive OAuth URL was not created.', true)
+      renderOauthPopup(oauthWindow, 'FineTuna Google Drive', 'Google Drive OAuth URL was not created.', true)
       setTemplateNotice('Google Drive OAuth URL was not created.')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not start Google Drive connection'
       setHistoryError(message)
       setTemplateNotice(formatGoogleDriveSetupError(message))
-      if (oauthWindow) renderOauthPopup(oauthWindow, formatGoogleDriveSetupError(message), true)
+      if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Google Drive', formatGoogleDriveSetupError(message), true)
     }
   }
 
@@ -1375,18 +1405,27 @@ function App() {
                   <div className="settings-subcard">
                     <h3>Kaggle OAuth Login</h3>
                     <div className="settings-actions">
-                      <button className="primary" onClick={() => void beginKaggleOAuthLogin()}>Start OAuth login</button>
-                      <button className="danger" onClick={() => void disconnectKaggleOAuth()}>Disconnect OAuth</button>
+                      <button className="primary" disabled={kaggleOAuthLoading} onClick={() => void beginKaggleOAuthLogin()}>{kaggleOAuthLoading ? 'Working...' : 'Start OAuth login'}</button>
+                      <button className="danger" disabled={kaggleOAuthLoading} onClick={() => void disconnectKaggleOAuth()}>Disconnect OAuth</button>
                     </div>
-                    {kaggleOAuth?.session && kaggleOAuth.session.status === 'awaiting_code' && (
+                    {kaggleConnectionNotice && <p className="info">{kaggleConnectionNotice}</p>}
+                    {kaggleConnectionError && <p className="warning">{kaggleConnectionError}</p>}
+                    {kaggleOAuth?.session && (
                       <div className="oauth-box">
-                        <strong>Waiting for Kaggle verification</strong>
-                        <p>After you finish the Kaggle sign-in in the new tab, paste the verification code here.</p>
-                        <label className="settings-field">Verification code<input value={kaggleOAuthCode} onChange={(event) => setKaggleOAuthCode(event.target.value)} placeholder="Paste code from Kaggle" /></label>
-                        <div className="settings-actions">
-                          <button className="primary" onClick={() => void submitKaggleOAuthCode()}>Confirm code</button>
-                          <span className="pill">{kaggleOAuth.session.status}</span>
-                        </div>
+                        <strong>{kaggleOAuth.session.status === 'awaiting_code' ? 'Waiting for Kaggle verification' : `Kaggle OAuth: ${kaggleOAuth.session.status}`}</strong>
+                        {kaggleOAuth.session.url && <a className="inline-link" href={kaggleOAuth.session.url} target="_blank" rel="noreferrer">Open Kaggle authorization</a>}
+                        {kaggleOAuth.session.status === 'awaiting_code' && (
+                          <>
+                            <p>After you finish the Kaggle sign-in in the new tab, paste the verification code here.</p>
+                            <label className="settings-field">Verification code<input value={kaggleOAuthCode} onChange={(event) => setKaggleOAuthCode(event.target.value)} placeholder="Paste code from Kaggle" /></label>
+                            <div className="settings-actions">
+                              <button className="primary" disabled={kaggleOAuthLoading} onClick={() => void submitKaggleOAuthCode()}>Confirm code</button>
+                              <span className="pill">{kaggleOAuth.session.status}</span>
+                            </div>
+                          </>
+                        )}
+                        {kaggleOAuth.session.error && <p className="warning">{kaggleOAuth.session.error}</p>}
+                        {kaggleOAuth.session.logs && <pre className="compact-log">{kaggleOAuth.session.logs}</pre>}
                       </div>
                     )}
                     {kaggleOAuth?.oauth.configured && <span className="pill ok">OAuth connected{` `}{kaggleOAuth.oauth.username ? `for ${kaggleOAuth.oauth.username}` : ''}</span>}
@@ -1636,14 +1675,15 @@ function formatGoogleDriveSetupError(message: string) {
   return message
 }
 
-function renderOauthPopup(popup: Window, message: string, isError: boolean) {
+function renderOauthPopup(popup: Window, title: string, message: string, isError: boolean) {
+  const safeTitle = escapeHtml(title)
   const safeMessage = escapeHtml(message)
   popup.document.open()
   popup.document.write(`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>FineTuna Google Drive</title>
+    <title>${safeTitle}</title>
     <style>
       body { font-family: Arial, sans-serif; padding: 24px; line-height: 1.5; color: #111827; }
       .box { border: 1px solid ${isError ? '#fecaca' : '#dbeafe'}; background: ${isError ? '#fff1f2' : '#eff6ff'}; color: ${isError ? '#991b1b' : '#1d4ed8'}; border-radius: 10px; padding: 16px; }
@@ -1652,7 +1692,7 @@ function renderOauthPopup(popup: Window, message: string, isError: boolean) {
   </head>
   <body>
     <div class="box">
-      <strong>FineTuna Google Drive</strong>
+      <strong>${safeTitle}</strong>
       <p>${safeMessage}</p>
       ${isError ? '<p>Keep this window open to review the error, or close it and fix the deployment configuration.</p>' : ''}
     </div>

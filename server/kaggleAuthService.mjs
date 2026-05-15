@@ -1,4 +1,5 @@
 import { mkdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawn } from 'node:child_process'
 import { buildKaggleOAuthEnv, getKaggleOAuthHome, getKaggleOAuthStatus } from './kaggleAuthRuntime.mjs'
@@ -8,6 +9,8 @@ const kaggleExe = resolve(process.env.LOCALAPPDATA ?? '', 'Packages/PythonSoftwa
 let activeLogin = null
 
 export async function startKaggleOAuthLogin(force = false) {
+  ensureKaggleOAuthSupported()
+
   if (activeLogin && !isFinalState(activeLogin.status) && !force) {
     const error = new Error('A Kaggle OAuth login is already in progress')
     error.statusCode = 409
@@ -89,6 +92,8 @@ export async function getKaggleOAuthSessionStatus() {
 }
 
 export async function revokeKaggleOAuthLogin() {
+  ensureKaggleOAuthSupported()
+
   const env = { ...process.env, ...buildKaggleOAuthEnv() }
   const output = await runKaggle(['auth', 'revoke'], env)
   activeLogin = null
@@ -102,6 +107,20 @@ function appendLog(chunk) {
   if (urlMatch) {
     activeLogin.url = urlMatch[0]
     if (activeLogin.status === 'starting') activeLogin.status = 'awaiting_code'
+  }
+}
+
+function ensureKaggleOAuthSupported() {
+  if (process.env.NETLIFY) {
+    const error = new Error('Kaggle OAuth login cannot run on Netlify serverless because it needs a long-lived Kaggle CLI process. Use Quick Connect with your Kaggle username and API key instead.')
+    error.statusCode = 400
+    throw error
+  }
+
+  if (!existsSync(kaggleExe)) {
+    const error = new Error('Kaggle CLI was not found on this machine. Use Quick Connect with your Kaggle username and API key, or install the Kaggle CLI before using OAuth login.')
+    error.statusCode = 400
+    throw error
   }
 }
 
