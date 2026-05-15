@@ -104,9 +104,9 @@ Model Selection → Data Setup → Training Config → Kaggle Execution → Down
  
 ## 📊 Product Preview
  
-| 🧭 Main Dashboard | 📈 Results Dashboard |
+| 🧭 Main Dashboard | 📈 Training Dashboard |
 |---|---|
-| ![FineTuna dashboard showing guided setup flow, provider connection status, recent training activity](docs/images/main-dashboard.png) | ![FineTuna results page with download buttons, metrics, and technique report](docs/images/results-downloads.png) |
+| ![FineTuna dashboard showing guided setup flow, provider connection status, and recent training activity](public/images/dashboard.png) | ![FineTuna training page showing active model training progress and run controls](public/images/training.png) |
  
 ---
  
@@ -199,11 +199,11 @@ vercel --prod
                      │
         ┌────────────┼────────────┐
         │            │            │
-    ┌───▼───┐   ┌───▼────┐  ┌───▼────┐
-    │Netlify│   │Supabase│  │ Kaggle │
-    │ API   │   │  Auth   │  │  GPU   │
-    └───────┘   │ Storage │  │Execution│
-                └────────┘  └────────┘
+    ┌───▼───┐   ┌───▼────┐  ┌───▼─────┐
+    │Netlify│   │Supabase│  │ Kaggle  │
+    │ API   │   │  Auth  │  │  GPU    │
+    └───────┘   │ Storage│  │Execution│
+                └────────┘  └─────────┘
                 
     • Route handlers    • User data      • Kernel execution
     • Auth middleware   • Job metadata   • Model training
