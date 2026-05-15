@@ -3,6 +3,9 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[build.environment]
+  VITE_FINETUNA_APP_URL = "https://finetuna.netlify.app"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
