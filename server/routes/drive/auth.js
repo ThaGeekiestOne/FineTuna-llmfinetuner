@@ -1,5 +1,5 @@
 import { readSupabaseAccessToken, requireAuthenticatedUser } from '../../authSession.mjs'
-import { buildGoogleDriveAuthUrl, createGoogleDriveAuthState, disconnectGoogleDrive, getGoogleDriveStatus } from '../../googleDriveService.mjs'
+import { buildGoogleDriveAuthUrl, disconnectGoogleDrive, getGoogleDriveStatus } from '../../googleDriveService.mjs'
 
 const driveStateCookieName = 'finetuna_drive_state'
 
@@ -13,14 +13,15 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'POST') {
-      const state = createGoogleDriveAuthState(user.id)
-      appendSetCookie(response, buildDriveStateCookie(state))
+      const body = await readJson(request)
+      const state = validateOAuthState(body.state)
+      const redirectUri = validateRedirectUri(body.redirectUri) || getGoogleRedirectUri(request)
       return send(response, 200, {
         configured: false,
         email: null,
         displayName: null,
         provider: 'google_drive',
-        url: buildGoogleDriveAuthUrl(state, getGoogleRedirectUri(request)),
+        url: buildGoogleDriveAuthUrl(state, redirectUri),
       })
     }
 
@@ -46,10 +47,6 @@ function getBaseUrl(request) {
   return `${protocol}://${host}`
 }
 
-function buildDriveStateCookie(state) {
-  return `${driveStateCookieName}=${encodeURIComponent(state)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 10}`
-}
-
 function clearDriveStateCookie() {
   return `${driveStateCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
 }
@@ -64,4 +61,30 @@ function send(response, statusCode, payload) {
   response.statusCode = statusCode
   response.setHeader('Content-Type', 'application/json')
   response.end(JSON.stringify(payload))
+}
+
+async function readJson(request) {
+  const chunks = []
+  for await (const chunk of request) chunks.push(chunk)
+  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+}
+
+function validateOAuthState(state) {
+  if (typeof state === 'string' && /^[a-f0-9]{64}$/i.test(state)) return state
+  const error = new Error('Invalid Google Drive OAuth state')
+  error.statusCode = 400
+  throw error
+}
+
+function validateRedirectUri(redirectUri) {
+  if (!redirectUri) return ''
+  try {
+    const url = new URL(String(redirectUri))
+    if (url.protocol === 'https:' || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return url.toString()
+    }
+  } catch {}
+  const error = new Error('Invalid Google Drive redirect URI')
+  error.statusCode = 400
+  throw error
 }

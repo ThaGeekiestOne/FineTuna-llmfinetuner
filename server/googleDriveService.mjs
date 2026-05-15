@@ -17,10 +17,6 @@ export async function getGoogleDriveStatus(userId = '', accessToken = '') {
   }
 }
 
-export function createGoogleDriveAuthState() {
-  return createRandomHex(32)
-}
-
 export function buildGoogleDriveAuthUrl(state, redirectUri) {
   const search = new URLSearchParams({
     client_id: getGoogleClientId(),
@@ -190,15 +186,4 @@ function getGoogleClientSecret() {
     throw error
   }
   return value
-}
-
-function createRandomHex(byteLength) {
-  const values = new Uint8Array(byteLength)
-  if (!globalThis.crypto?.getRandomValues) {
-    const error = new Error('Secure random source is not available for Google Drive OAuth state')
-    error.statusCode = 500
-    throw error
-  }
-  globalThis.crypto.getRandomValues(values)
-  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('')
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import './App.css'
 import { fallbackCustomTemplate, models, templates, type DomainTemplate, type ModelCard, type Technique, type TrainingExample } from './lib/catalog'
 import { completeOAuthSignIn, getAuthSession, readOAuthRedirectPayload, signIn, signOut, signUp, startOAuthSignIn, type AuthUser, type OAuthProvider } from './lib/auth'
-import { disconnectGoogleDrive, getGoogleDriveStatus, startGoogleDriveAuth, type GoogleDriveStatus } from './lib/drive'
+import { completeGoogleDriveAuth, consumeGoogleDriveOAuthState, createGoogleDriveOAuthRequest, disconnectGoogleDrive, getGoogleDriveStatus, startGoogleDriveAuth, type GoogleDriveStatus } from './lib/drive'
 import { buildKaggleArtifactUrl, createStoredJob, deleteStoredJob, downloadKaggleJobOutput, fetchKaggleJobStatus, getKaggleCredentialsStatus, listStoredJobs, saveKaggleCredentials, startKaggleJob, type StoredJob, updateStoredJob } from './lib/jobs'
 import { fetchProviderCatalog } from './lib/providers'
 import { buildTechniqueReport, calculateHyperparameters, estimateRuntimeHours, generateTrainingScript, mergeDatasets, parseDatasetText, snippets, validateDataset, type Hyperparameters } from './lib/training'
@@ -230,6 +230,11 @@ function App() {
     void loadStoredJobs()
     void loadKaggleCredentialStatus()
     void loadGoogleDriveConnection()
+  }, [authUser])
+
+  useEffect(() => {
+    if (!authUser || window.location.pathname !== '/drive/callback') return
+    void completeGoogleDriveRedirect()
   }, [authUser])
 
   useEffect(() => {
@@ -516,7 +521,8 @@ function App() {
         return
       }
       renderOauthPopup(oauthWindow, 'FineTuna Google Drive', 'Connecting to Google Drive...', false)
-      const status = await startGoogleDriveAuth()
+      const oauthRequest = createGoogleDriveOAuthRequest()
+      const status = await startGoogleDriveAuth(oauthRequest)
       setGoogleDrive(status)
       if (status.url) {
         oauthWindow.location.href = status.url
@@ -530,6 +536,35 @@ function App() {
       setHistoryError(message)
       setTemplateNotice(formatGoogleDriveSetupError(message))
       if (oauthWindow) renderOauthPopup(oauthWindow, 'FineTuna Google Drive', formatGoogleDriveSetupError(message), true)
+    }
+  }
+
+  async function completeGoogleDriveRedirect() {
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get('error_description') || params.get('error')
+    const code = params.get('code') ?? ''
+    const state = params.get('state') ?? ''
+    const redirectUri = `${window.location.origin}/drive/callback`
+    window.history.replaceState(null, document.title, '/')
+
+    if (error) {
+      setTemplateNotice(`Google Drive connection failed: ${error}`)
+      return
+    }
+    if (!code || !consumeGoogleDriveOAuthState(state)) {
+      setTemplateNotice('Google Drive connection failed. The OAuth state did not validate.')
+      return
+    }
+
+    try {
+      setTemplateNotice('Completing Google Drive connection...')
+      const status = await completeGoogleDriveAuth({ code, redirectUri })
+      setGoogleDrive(status)
+      setTemplateNotice('Google Drive connected.')
+      window.opener?.postMessage({ type: 'finetuna-google-drive-connected' }, window.location.origin)
+      if (window.opener) window.setTimeout(() => window.close(), 300)
+    } catch (completionError) {
+      setTemplateNotice(formatGoogleDriveSetupError(completionError instanceof Error ? completionError.message : 'Google Drive connection failed'))
     }
   }
 

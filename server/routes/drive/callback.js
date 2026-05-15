@@ -5,6 +5,24 @@ const driveStateCookieName = 'finetuna_drive_state'
 
 export default async function handler(request, response) {
   try {
+    if (request.method === 'POST') {
+      const user = await requireAuthenticatedUser(request, response)
+      const accessToken = readSupabaseAccessToken(request)
+      const body = await readJson(request)
+      const code = typeof body.code === 'string' ? body.code : ''
+      const redirectUri = typeof body.redirectUri === 'string' ? body.redirectUri : ''
+      if (!code || !redirectUri) return sendJson(response, 400, { error: 'Missing Google Drive OAuth code or redirect URI' })
+
+      const connection = await completeGoogleDriveAuth({ code, redirectUri, userId: user.id, accessToken })
+      return sendJson(response, 200, {
+        configured: Boolean(connection.refreshToken),
+        email: connection.email ?? null,
+        displayName: connection.displayName ?? null,
+        expiresAt: connection.expiresAt ?? null,
+        provider: 'google_drive',
+      })
+    }
+
     if (request.method !== 'GET') {
       response.statusCode = 405
       response.end('Method not allowed')
@@ -53,6 +71,18 @@ function getBaseUrl(request) {
 
 function clearDriveStateCookie() {
   return `${driveStateCookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+}
+
+async function readJson(request) {
+  const chunks = []
+  for await (const chunk of request) chunks.push(chunk)
+  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+}
+
+function sendJson(response, statusCode, payload) {
+  response.statusCode = statusCode
+  response.setHeader('Content-Type', 'application/json')
+  response.end(JSON.stringify(payload))
 }
 
 function appendSetCookie(response, cookie) {
