@@ -87,9 +87,9 @@ async function supabaseRestFetch(path, { method, accessToken, body, prefer = '' 
 }
 
 function getSupabaseUrl() {
-  return process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''
+  return process.env.VITE_SUPABASE_URL || ''
 }
 
 function getSupabaseAnonKey() {
-  return process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+  return process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
 }
