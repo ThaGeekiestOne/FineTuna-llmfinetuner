@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from 'node:crypto'
 import { deleteGoogleDriveConnection, getGoogleDriveConnection, saveGoogleDriveConnection } from './googleDriveStore.mjs'
 
 const scope = 'https://www.googleapis.com/auth/drive.readonly'
@@ -18,10 +17,8 @@ export async function getGoogleDriveStatus(userId = '', accessToken = '') {
   }
 }
 
-export function createGoogleDriveAuthState(userId) {
-  const nonce = randomBytes(16).toString('hex')
-  const digest = createHash('sha256').update(`${userId}:${nonce}`).digest('hex')
-  return `${nonce}.${digest}`
+export function createGoogleDriveAuthState() {
+  return createRandomHex(32)
 }
 
 export function buildGoogleDriveAuthUrl(state, redirectUri) {
@@ -193,4 +190,15 @@ function getGoogleClientSecret() {
     throw error
   }
   return value
+}
+
+function createRandomHex(byteLength) {
+  const values = new Uint8Array(byteLength)
+  if (!globalThis.crypto?.getRandomValues) {
+    const error = new Error('Secure random source is not available for Google Drive OAuth state')
+    error.statusCode = 500
+    throw error
+  }
+  globalThis.crypto.getRandomValues(values)
+  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('')
 }
