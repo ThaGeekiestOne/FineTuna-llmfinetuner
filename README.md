@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/images/finetuna-banner.svg" alt="FineTuna main dashboard and results banner" width="100%" />
+</p>
+
 # FineTuna
  
 > **Fine-tune any open-source LLM without GPU ownership, setup headaches, or ML expertise.**

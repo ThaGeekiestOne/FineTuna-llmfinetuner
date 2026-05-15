@@ -1,0 +1,105 @@
+<svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bgGradient)"/>
+  
+  <!-- Animated background elements -->
+  <circle cx="150" cy="80" r="80" fill="#06b6d4" opacity="0.08"/>
+  <circle cx="1050" cy="320" r="120" fill="#0891b2" opacity="0.08"/>
+  <circle cx="600" cy="200" r="150" fill="#06b6d4" opacity="0.05"/>
+  
+  <!-- Accent lines -->
+  <line x1="0" y1="60" x2="1200" y2="60" stroke="url(#accentGradient)" stroke-width="2" opacity="0.3"/>
+  <line x1="0" y1="340" x2="1200" y2="340" stroke="url(#accentGradient)" stroke-width="2" opacity="0.3"/>
+  
+  <!-- Left accent vertical line -->
+  <line x1="340" y1="80" x2="340" y2="320" stroke="url(#accentGradient)" stroke-width="1" opacity="0.2"/>
+  
+  <!-- Main Title -->
+  <text x="60" y="140" font-family="Arial, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">
+    FineTuna
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="60" y="200" font-family="Arial, sans-serif" font-size="22" fill="#cbd5e1" font-weight="300" letter-spacing="0.5">
+    Fine-tune any LLM. Zero GPU. Free forever.
+  </text>
+  
+  <!-- Feature tags -->
+  <g transform="translate(60, 240)">
+    <!-- Tag 1: Models -->
+    <rect x="0" y="0" width="130" height="36" rx="18" fill="rgba(6, 182, 212, 0.1)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="65" y="24" font-family="Arial, sans-serif" font-size="12" fill="#06b6d4" text-anchor="middle" font-weight="600">
+      🤗 10K+ Models
+    </text>
+    
+    <!-- Tag 2: Templates -->
+    <rect x="150" y="0" width="130" height="36" rx="18" fill="rgba(6, 182, 212, 0.1)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="215" y="24" font-family="Arial, sans-serif" font-size="12" fill="#06b6d4" text-anchor="middle" font-weight="600">
+      📚 5 Templates
+    </text>
+    
+    <!-- Tag 3: Free -->
+    <rect x="300" y="0" width="130" height="36" rx="18" fill="rgba(6, 182, 212, 0.1)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="365" y="24" font-family="Arial, sans-serif" font-size="12" fill="#06b6d4" text-anchor="middle" font-weight="600">
+      💰 $0 Cost
+    </text>
+  </g>
+  
+  <!-- Right side stats -->
+  <g transform="translate(750, 100)">
+    <!-- Stat 1: Models -->
+    <g>
+      <rect x="0" y="0" width="120" height="100" rx="10" fill="rgba(30, 41, 59, 0.7)" stroke="#06b6d4" stroke-width="1.5" opacity="0.9"/>
+      <text x="60" y="45" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="#06b6d4" text-anchor="middle">10K+</text>
+      <text x="60" y="75" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1" text-anchor="middle" font-weight="600">MODELS</text>
+    </g>
+    
+    <!-- Stat 2: Cost -->
+    <g transform="translate(150, 0)">
+      <rect x="0" y="0" width="120" height="100" rx="10" fill="rgba(30, 41, 59, 0.7)" stroke="#06b6d4" stroke-width="1.5" opacity="0.9"/>
+      <text x="60" y="45" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="#06b6d4" text-anchor="middle">$0</text>
+      <text x="60" y="75" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1" text-anchor="middle" font-weight="600">COST/MO</text>
+    </g>
+    
+    <!-- Stat 3: Time -->
+    <g transform="translate(0, 130)">
+      <rect x="0" y="0" width="120" height="100" rx="10" fill="rgba(30, 41, 59, 0.7)" stroke="#06b6d4" stroke-width="1.5" opacity="0.9"/>
+      <text x="60" y="45" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="#06b6d4" text-anchor="middle">&lt;30m</text>
+      <text x="60" y="75" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1" text-anchor="middle" font-weight="600">SETUP</text>
+    </g>
+    
+    <!-- Stat 4: Success -->
+    <g transform="translate(150, 130)">
+      <rect x="0" y="0" width="120" height="100" rx="10" fill="rgba(30, 41, 59, 0.7)" stroke="#06b6d4" stroke-width="1.5" opacity="0.9"/>
+      <text x="60" y="45" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="#06b6d4" text-anchor="middle">95%</text>
+      <text x="60" y="75" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1" text-anchor="middle" font-weight="600">SUCCESS</text>
+    </g>
+  </g>
+  
+  <!-- Bottom tagline -->
+  <text x="600" y="390" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle" letter-spacing="1.5" font-weight="500">
+    DEMOCRATIZING LLM FINE-TUNING • BUILT FOR EVERYONE • OPEN SOURCE
+  </text>
+</svg>
