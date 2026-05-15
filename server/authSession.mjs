@@ -143,7 +143,12 @@ async function readSupabaseSession(request, response) {
 }
 
 function readHeader(request, key) {
-  return request.headers?.[key.toLowerCase()] ?? request.headers?.[key] ?? ''
+  if (!key) return ''
+  const headers = request.headers
+  const headerName = String(key)
+  if (!headers) return ''
+  if (typeof headers.get === 'function') return headers.get(headerName) ?? ''
+  return headers[headerName.toLowerCase()] ?? headers[headerName] ?? ''
 }
 
 function readBearerToken(request) {
